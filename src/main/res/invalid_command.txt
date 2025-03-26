@@ -1,0 +1,4 @@
+create event Meeting 2025-03-01T10:00 to 2025-03-01T11:00   // Missing 'from'
+edit event name Meeting from 2025-03-01T10:00 2025-03-01T11:00   // Missing 'to' and 'with'
+print events 2025-03-01   // Incorrect command format
+export calendar events.csv   // Incorrect command keyword

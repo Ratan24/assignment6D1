@@ -1,0 +1,4 @@
+create event office-hours-cs5010 from 2024-03-11T10:00 to 2024-03-11T12:00 repeats MWR until 2024-03-21T13:00
+edit events subject office-hours-cs5010 from 2024-03-13T10:00 with newname
+print events from 2024-03-11T09:00 to 2024-03-22T13:00
+exit

@@ -1,0 +1,40 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Eclipse IDE files
+.project
+.classpath
+.settings/
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+
+# Maven build directory
+/target/
+
+# Gradle build directory
+/build/
+
+# Java wrapper files for OS
+*.swp
+*~
+
+# JDK files
+.jdk/
+
+# macOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# NetBeans project directory
+/nbproject/
+
+# Gradle wrapper
+gradle-wrapper.jar
+gradle-wrapper.properties

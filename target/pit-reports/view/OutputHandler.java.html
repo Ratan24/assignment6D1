@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>OutputHandler.java</h1>
+
+<table class="src">
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package view;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import javax.annotation.processing.Generated;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public class OutputHandler implements IOutputHandler {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  private static OutputHandler instance = new OutputHandler();</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  private OutputHandler() { }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public static OutputHandler getInstance() {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_11'/>
+11
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_11'>1</a>
+<span>
+1. getInstance : replaced return value with null for view/OutputHandler::getInstance &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    return instance;</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Override</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  @Generated(&#34;Excluded from mutation testing&#34;)</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>  public void println(String s) {</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_17'/>
+17
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_17'>1</a>
+<span>
+1. println : removed call to java/io/PrintStream::println &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    System.out.println(s);</span></pre></td></tr>
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>  }</span></pre></td></tr>
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@48bafe39_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@48bafe39_11'>11</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_11'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>getInstance<br/><b>Killed by : </b>tests.CalendarAppMainTest.testMainNoArguments(tests.CalendarAppMainTest)</span></span> replaced return value with null for view/OutputHandler::getInstance &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@48bafe39_17'>17</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@48bafe39_17'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>println<br/><b>Killed by : </b>tests.CalendarAppMainTest.testMainNoArguments(tests.CalendarAppMainTest)</span></span> removed call to java/io/PrintStream::println &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+<li class='mutator'>EMPTY_RETURNS</li>
+<li class='mutator'>FALSE_RETURNS</li>
+<li class='mutator'>INCREMENTS</li>
+<li class='mutator'>INVERT_NEGS</li>
+<li class='mutator'>MATH</li>
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+<li class='mutator'>NULL_RETURNS</li>
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+<li class='mutator'>TRUE_RETURNS</li>
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>tests.CalendarAppMainTest.testMainNoArguments(tests.CalendarAppMainTest) (0 ms)</li><li>tests.CalendarAppTest.testMainInsufficientArgs(tests.CalendarAppTest) (0 ms)</li><li>tests.CalendarAppMainTest.testMainOneArgument(tests.CalendarAppMainTest) (0 ms)</li><li>tests.CalendarManagerTest.testExportToCSV_Error(tests.CalendarManagerTest) (0 ms)</li><li>tests.CalendarManagerTest.testExportToCSV_ErrorReplicate(tests.CalendarManagerTest) (0 ms)</li><li>tests.CalendarAppMainTest.testMainInvalidMode(tests.CalendarAppMainTest) (0 ms)</li><li>tests.CalendarAppTest.testMainInvalidMode(tests.CalendarAppTest) (0 ms)</li><li>tests.CalendarAppMainTest.testMainHeadlessMode_NonExistentFile(tests.CalendarAppMainTest) (0 ms)</li><li>tests.CalendarAppMainTest.testMainHeadlessMode_MissingFileArg(tests.CalendarAppMainTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_Time(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_AllDay(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_TimedReplicate(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarManagerTest.testExportToCSV(tests.CalendarManagerTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_AllDayReplicate(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarManagerTest.testExportToCSV_Output(tests.CalendarManagerTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_AllDayCommand(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_Timed(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarManagerTest.testExportToCSV_Success(tests.CalendarManagerTest) (0 ms)</li><li>tests.CalendarAppTest.testCreateTimedEvent(tests.CalendarAppTest) (1 ms)</li><li>tests.CalendarAppMainTest.testMainInteractiveMode(tests.CalendarAppMainTest) (3 ms)</li><li>tests.CalendarManagerTest.testExportToGoogleCSV(tests.CalendarManagerTest) (0 ms)</li><li>tests.CalendarManagerTest.testExportToGoogleCSV_Content(tests.CalendarManagerTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_AutoDeclineConflict(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessEditCommand_MissingToForSingular(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessShowStatus(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarAppTest.testShowStatusOutput(tests.CalendarAppTest) (0 ms)</li><li>tests.CommandParserTest.testProcessShowStatusCommand(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessShowStatus_Valid(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarAppTest.testShowStatus(tests.CalendarAppTest) (0 ms)</li><li>tests.CommandParserTest.testProcessPrintEventsOn(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_RepeatingTimed(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessPrintEventsOn_Valid(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessPrintEventsOnCommand(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarManagerTest.testExportToCSV_Content(tests.CalendarManagerTest) (5 ms)</li><li>tests.CalendarAppTest.testCreateAllDayEvent(tests.CalendarAppTest) (5 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_RepeatingTimedCommand(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessEditCommand_Plural(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessPrintEventsRange_Valid(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarAppTest.testRecurringEventUntil(tests.CalendarAppTest) (0 ms)</li><li>tests.CalendarAppTest.testEditEventsWithoutFromClause(tests.CalendarAppTest) (1 ms)</li><li>tests.CommandParserTest.testProcessPrintEventsRange(tests.CommandParserTest) (1 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_RepeatingAllDay(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarAppTest.testMissingToKeywordInEdit(tests.CalendarAppTest) (5 ms)</li><li>tests.CalendarAppTest.testPrintEventsOn(tests.CalendarAppTest) (2 ms)</li><li>tests.CommandParserTest.testEditEventsSubjectPlural(tests.CommandParserTest) (0 ms)</li><li>tests.CalendarAppTest.testExportCalCommand(tests.CalendarAppTest) (1 ms)</li><li>tests.CalendarAppTest.testEditEventsByStart(tests.CalendarAppTest) (0 ms)</li><li>tests.CalendarAppTest.testEditSingleEvent(tests.CalendarAppTest) (0 ms)</li><li>tests.CalendarAppTest.testEditEventsByName(tests.CalendarAppTest) (2 ms)</li><li>tests.CommandParserTest.testProcessCreateEvent_RepeatingAllDayCommand(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessEditCommand_PluralCommand(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessEditCommand_SingularSuccess(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessEditCommand_SingularSuccessEditcommand(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessExportCal_Valid(tests.CommandParserTest) (1 ms)</li><li>tests.CommandParserTest.testProcessEditCommand_SingularSuccessEditcommandReplicate(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testEditEventSubjectSingular(tests.CommandParserTest) (0 ms)</li><li>tests.CommandParserTest.testProcessExportGoogleCSV_Valid(tests.CommandParserTest) (1 ms)</li><li>tests.CalendarAppTest.testRecurringEventFixedTimes(tests.CalendarAppTest) (1 ms)</li><li>tests.CalendarAppTest.testPrintEventsRange(tests.CalendarAppTest) (2 ms)</li><li>tests.CalendarAppTest.testExportGoogleCSV(tests.CalendarAppTest) (6 ms)</li><li>tests.CommandParserTest.testProcessExportCalAndGoogleCSV(tests.CommandParserTest) (1 ms)</li><li>tests.CalendarAppMainTest.testMainHeadlessMode_InvalidCommand(tests.CalendarAppMainTest) (17 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.17.2
+
+</body>
+</html>

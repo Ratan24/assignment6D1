@@ -1,0 +1,19 @@
+create calendar --name testCalendar --timezone America/New_York
+use calendar --name testCalendar
+create event --autoDecline "Team Meeting" from 2025-03-10T12:12 to 2025-03-10T13:12
+create event --autoDecline "Lunch Break" on 2020-03-10T12:12
+create event "Meeting" from 2025-03-10T12:12 to 2025-03-10T13:12
+create event "Dinner Break" from 2025-03-10T14:00 to 2025-03-10T15:00 description Contract_review location Office_5
+create event --autoDecline "Breakfast" from 2023-03-10T12:12 to 2023-03-10T13:12 repeats MTW for 2 times
+create event "Daily" on 2021-03-10T09:00 repeats MTWRF for 5 times
+create event "Sprint" from 2025-03-10T10:00 to 2025-03-10T11:00 repeats F for 3 times description Planning_session
+create event "Sprint Review" from 2025-03-10T14:00 to 2025-03-10T15:00 repeats F until 2025-04-10 location Room_101 public
+edit event description "Team Meeting" from 2025-03-10T12:12 to 2025-03-10T13:12 with "Initial Agenda"
+edit event location "Team Meeting" from 2025-03-10T12:12 to 2025-03-10T13:12 with Room101
+edit event from "Team Meeting" from 2025-03-10T12:12 to 2025-03-10T13:12 with 2025-03-10T11:50
+print events from 2021-03-11T12:12 to 2025-10-12T12:12
+print events on 2025-03-10
+show status on 2025-03-10T12:12
+show status on 2025-03-10T17:12
+export cal events.csv
+exit
