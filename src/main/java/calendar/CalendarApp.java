@@ -8,7 +8,8 @@ public class CalendarApp {
   public static void main(String[] args) {
     try {
       if (args.length < 2) {
-        OutputHandler.getInstance().println("Usage: --mode interactive OR --mode headless <commandFile.txt>");
+        OutputHandler.getInstance().println("Usage: --mode interactive OR --mode headless" +
+                " <commandFile.txt>");
         return;
       }
 

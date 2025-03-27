@@ -31,18 +31,6 @@ public class CalendarManager implements ICalendarManager {
     }
   }
 
-  public String getCalendarName() {
-    return calendarName;
-  }
-
-  public void setCalendarName(String newName) {
-    this.calendarName = newName;
-  }
-
-  public ZoneId getTimeZone() {
-    return timeZone;
-  }
-
   public void setTimeZone(String timezoneStr) throws Exception {
     try {
       this.timeZone = ZoneId.of(timezoneStr);
@@ -229,8 +217,17 @@ public class CalendarManager implements ICalendarManager {
     return new ArrayList<>(events);
   }
 
-//  @Override
-//  public void accept(CommandParserVisitor visitor, String command) throws Exception {
-//    visitor.process(command, this);
-//  }
+  public String getCalendarName() {
+    return calendarName;
+  }
+
+  public void setCalendarName(String newName) {
+    this.calendarName = newName;
+  }
+
+  public ZoneId getTimeZone() {
+    return timeZone;
+  }
+
+
 }

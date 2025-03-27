@@ -515,4 +515,83 @@ public class CalendarAppTest {
 //
 //    temp.delete();
 //  }
+
+  private String captureOutput(Runnable runnable) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    PrintStream originalOut = System.out;
+    System.setOut(new PrintStream(baos));
+    try {
+      runnable.run();
+    } finally {
+      System.setOut(originalOut);
+    }
+    return baos.toString();
+  }
+
+  @Test
+  public void testRunInteractiveMode_exitImmediately() {
+    // Simulate interactive mode: the only command is "exit"
+    String simulatedInput = "exit\n";
+    InputStream originalIn = System.in;
+    System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
+
+    MultiCalendarManager multiCal = new MultiCalendarManager();
+    CalendarController controller = new CalendarController(multiCal);
+
+    String output = captureOutput(() -> controller.runInteractiveMode());
+
+    System.setIn(originalIn);
+
+    // Check that the initial prompt, the "exit" command and final "Exiting." message are printed
+    assertTrue(output.contains("Calendar App Interactive Mode. Type 'exit' to quit."));
+    assertTrue(output.contains("> "));
+    assertTrue(output.contains("Exiting."));
+  }
+
+  @Test
+  public void testRunHeadlessMode_validFile() throws Exception {
+    // Create a temporary file with a valid command file.
+    File tempFile = File.createTempFile("commands", ".txt");
+    try (PrintWriter writer = new PrintWriter(tempFile)) {
+      writer.println("create calendar --name TestCal --timezone America/New_York");
+      writer.println("exit");
+    }
+
+    MultiCalendarManager multiCal = new MultiCalendarManager();
+    CalendarController controller = new CalendarController(multiCal);
+
+    String output = captureOutput(() -> controller.runHeadlessMode(tempFile.getAbsolutePath()));
+    tempFile.delete();
+
+    // Check that the file commands are printed and that a calendar creation message appears.
+    assertTrue(output.contains("> create calendar --name TestCal --timezone America/New_York"));
+    assertTrue(output.contains("Calendar created: TestCal (America/New_York)"));
+    assertTrue(output.contains("Exiting."));
+  }
+
+  @Test
+  public void testRunHeadlessMode_invalidFile() {
+    MultiCalendarManager multiCal = new MultiCalendarManager();
+    CalendarController controller = new CalendarController(multiCal);
+    String output = captureOutput(() -> controller.runHeadlessMode("nonexistent_file.txt"));
+    // Check that an error reading the file is reported.
+    assertTrue(output.contains("Error reading file:"));
+  }
+
+//  @Test
+//  public void testRunHeadlessMode_invalidCommand() throws Exception {
+//    // Create a temporary file with an invalid command.
+//    File tempFile = File.createTempFile("invalidCommands", ".txt");
+//    try (PrintWriter writer = new PrintWriter(tempFile)) {
+//      writer.println("invalid command");
+//      writer.println("exit");
+//    }
+//    MultiCalendarManager multiCal = new MultiCalendarManager();
+//    CalendarController controller = new CalendarController(multiCal);
+//    String output = captureOutput(() -> controller.runHeadlessMode(tempFile.getAbsolutePath()));
+//    tempFile.delete();
+//
+//    // Expect the output to contain a command error message.
+//    assertTrue(output.contains("Command error: Invalid command: invalid command"));
+//  }
 }

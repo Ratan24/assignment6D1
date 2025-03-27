@@ -7,16 +7,18 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-// MultiCalendarManager now implements ICalendarManager
-public class MultiCalendarManager implements ICalendarManager {
+/**
+ * MultiCalendarManager now implements ICalendarManager.
+ */
+public class MultiCalendarManager implements ICalendarManager, IMultiCalendar {
 
   // Map from calendar name to a CalendarManager instance.
-  private final Map<String, CalendarManager> calendars;
+  private final Map<String, CalendarManager> allCalendars;
   // The currently selected calendar.
-  private CalendarManager currentCalendar;
+  private CalendarManager activeCalendar;
 
   public MultiCalendarManager() {
-    calendars = new HashMap<>();
+    allCalendars = new HashMap<>();
   }
 
   // ===== Multi-Calendar Specific Methods =====
@@ -25,63 +27,66 @@ public class MultiCalendarManager implements ICalendarManager {
    * Creates a new calendar with the given name and timezone.
    * Throws an Exception if a calendar with that name already exists.
    */
-  public void createCalendar(String name, String timezoneStr) throws Exception {
-    if (calendars.containsKey(name)) {
-      throw new Exception("Calendar with name " + name + " already exists.");
+  @Override
+  public void createCalendar(String calName, String tzStr) throws Exception {
+    if (allCalendars.containsKey(calName)) {
+      throw new Exception("Calendar with name " + calName + " already exists.");
     }
-    CalendarManager newCal = new CalendarManager(name, timezoneStr);
-    calendars.put(name, newCal);
+    CalendarManager freshCalendar = new CalendarManager(calName, tzStr);
+    allCalendars.put(calName, freshCalendar);
     // Set as current calendar if none is in use.
-    if (currentCalendar == null) {
-      currentCalendar = newCal;
+    if (activeCalendar == null) {
+      activeCalendar = freshCalendar;
     }
-    OutputHandler.getInstance().println("Calendar created: " + name + " (" + timezoneStr + ")");
+    OutputHandler.getInstance().println("Calendar created: " + calName + " (" + tzStr + ")");
   }
 
   /**
    * Edits a calendar's property (name or timezone).
    */
-  public void editCalendar(String name, String property, String newValue) throws Exception {
-    CalendarManager cal = calendars.get(name);
-    if (cal == null) {
-      throw new Exception("Calendar not found: " + name);
+  @Override
+  public void editCalendar(String calName, String calProp, String calVal) throws Exception {
+    CalendarManager chosenCalendar = allCalendars.get(calName);
+    if (chosenCalendar == null) {
+      throw new Exception("Calendar not found: " + calName);
     }
-    switch (property.toLowerCase()) {
+    switch (calProp.toLowerCase()) {
       case "name":
-        if (calendars.containsKey(newValue)) {
+        if (allCalendars.containsKey(calVal)) {
           throw new Exception("Another calendar with that name already exists.");
         }
-        calendars.remove(name);
-        cal.setCalendarName(newValue);
-        calendars.put(newValue, cal);
-        OutputHandler.getInstance().println("Calendar name updated to: " + newValue);
+        allCalendars.remove(calName);
+        chosenCalendar.setCalendarName(calVal);
+        allCalendars.put(calVal, chosenCalendar);
+        OutputHandler.getInstance().println("Calendar name updated to: " + calVal);
         break;
       case "timezone":
-        cal.setTimeZone(newValue);
-        OutputHandler.getInstance().println("Calendar timezone updated to: " + newValue);
+        chosenCalendar.setTimeZone(calVal);
+        OutputHandler.getInstance().println("Calendar timezone updated to: " + calVal);
         break;
       default:
-        throw new Exception("Invalid calendar property: " + property);
+        throw new Exception("Invalid calendar property: " + calProp);
     }
   }
 
   /**
    * Sets the current calendar context.
    */
-  public void useCalendar(String name) throws Exception {
-    CalendarManager cal = calendars.get(name);
-    if (cal == null) {
-      throw new Exception("Calendar not found: " + name);
+  @Override
+  public void useCalendar(String calName) throws Exception {
+    CalendarManager foundCalendar = allCalendars.get(calName);
+    if (foundCalendar == null) {
+      throw new Exception("Calendar not found: " + calName);
     }
-    currentCalendar = cal;
-    OutputHandler.getInstance().println("Using calendar: " + name);
+    activeCalendar = foundCalendar;
+    OutputHandler.getInstance().println("Using calendar: " + calName);
   }
 
   /**
    * Returns all calendars.
    */
   public Collection<CalendarManager> getAllCalendars() {
-    return calendars.values();
+    return allCalendars.values();
   }
 
   // ===== Copy Functions =====
@@ -90,164 +95,171 @@ public class MultiCalendarManager implements ICalendarManager {
    * Copies a single event from the current calendar to the target calendar.
    * The event is identified by name and source start time.
    */
-  public void copyEvent(String eventName, LocalDateTime sourceStart, String targetCalendarName, LocalDateTime targetStart) throws Exception {
-    CalendarManager sourceCal = getCurrentCalendar();
-    CalendarManager targetCal = calendars.get(targetCalendarName);
+  @Override
+  public void copyEvent(String label, LocalDateTime fromWhen, String toCal, LocalDateTime toWhen) throws Exception {
+    CalendarManager fromCal = getCurrentCalendar();
+    CalendarManager targetCal = allCalendars.get(toCal);
     if (targetCal == null) {
-      throw new Exception("Target calendar not found: " + targetCalendarName);
+      throw new Exception("Target calendar not found: " + toCal);
     }
-    ICalendarEvent eventToCopy = null;
-    for (ICalendarEvent ev : sourceCal.getAllEvents()) {
-      if (ev.getEventName().equals(eventName) && ev.getStart().equals(sourceStart)) {
-        eventToCopy = ev;
+    ICalendarEvent refEvent = null;
+    for (ICalendarEvent evItem : fromCal.getAllEvents()) {
+      if (evItem.getEventName().equals(label) && evItem.getStart().equals(fromWhen)) {
+        refEvent = evItem;
         break;
       }
     }
-    if (eventToCopy == null) {
+    if (refEvent == null) {
       throw new Exception("Event not found in source calendar.");
     }
-    long durationMinutes = java.time.Duration.between(eventToCopy.getStart(), eventToCopy.getEnd()).toMinutes();
-    LocalDateTime newEnd = targetStart.plusMinutes(durationMinutes);
-    CalendarEvent newEvent = new CalendarEvent(eventToCopy.getEventName(), targetStart, newEnd, eventToCopy.isAllDay());
-    newEvent.setDescription(eventToCopy.getDescription());
-    newEvent.setLocation(eventToCopy.getLocation());
-    newEvent.setPublic(eventToCopy.isPublic());
-    targetCal.addEvent(newEvent, true);
-    OutputHandler.getInstance().println("Event copied to calendar " + targetCalendarName + ": " + newEvent);
+    long eventDurationMins = java.time.Duration.between(refEvent.getStart(), refEvent.getEnd()).toMinutes();
+    LocalDateTime updatedEnd = toWhen.plusMinutes(eventDurationMins);
+    CalendarEvent clonedEvent = new CalendarEvent(refEvent.getEventName(), toWhen, updatedEnd, refEvent.isAllDay());
+    clonedEvent.setDescription(refEvent.getDescription());
+    clonedEvent.setLocation(refEvent.getLocation());
+    clonedEvent.setPublic(refEvent.isPublic());
+    targetCal.addEvent(clonedEvent, true);
+    OutputHandler.getInstance().println("Event copied to calendar " + toCal + ": " + clonedEvent);
   }
 
   /**
    * Copies all events on a given day from the current calendar to the target calendar.
    * The dates are shifted to the target date.
    */
-  public void copyEventsOn(LocalDate sourceDate, String targetCalendarName, LocalDate targetDate) throws Exception {
+  @Override
+  public void copyEventsOn(LocalDate fromDay, String toCal, LocalDate toDay) throws Exception {
     CalendarManager sourceCal = getCurrentCalendar();
-    CalendarManager targetCal = calendars.get(targetCalendarName);
-    if (targetCal == null) {
-      throw new Exception("Target calendar not found: " + targetCalendarName);
+    CalendarManager destCal = allCalendars.get(toCal);
+    if (destCal == null) {
+      throw new Exception("Target calendar not found: " + toCal);
     }
-    List<ICalendarEvent> eventsToCopy = sourceCal.getEventsOn(sourceDate);
-    if (eventsToCopy.isEmpty()) {
-      throw new Exception("No events to copy on " + sourceDate);
+    List<ICalendarEvent> dayEvents = sourceCal.getEventsOn(fromDay);
+    if (dayEvents.isEmpty()) {
+      throw new Exception("No events to copy on " + fromDay);
     }
-    for (ICalendarEvent ev : eventsToCopy) {
-      LocalDateTime newStart = targetDate.atTime(ev.getStart().toLocalTime());
-      LocalDateTime newEnd = targetDate.atTime(ev.getEnd().toLocalTime());
-      CalendarEvent newEvent = new CalendarEvent(ev.getEventName(), newStart, newEnd, ev.isAllDay());
-      newEvent.setDescription(ev.getDescription());
-      newEvent.setLocation(ev.getLocation());
-      newEvent.setPublic(ev.isPublic());
-      targetCal.addEvent(newEvent, true);
+    for (ICalendarEvent e : dayEvents) {
+      LocalDateTime mirroredStart = toDay.atTime(e.getStart().toLocalTime());
+      LocalDateTime mirroredEnd = toDay.atTime(e.getEnd().toLocalTime());
+      CalendarEvent clonedEvent = new CalendarEvent(e.getEventName(), mirroredStart, mirroredEnd, e.isAllDay());
+      clonedEvent.setDescription(e.getDescription());
+      clonedEvent.setLocation(e.getLocation());
+      clonedEvent.setPublic(e.isPublic());
+      destCal.addEvent(clonedEvent, true);
     }
-    OutputHandler.getInstance().println("Copied " + eventsToCopy.size() + " event(s) from " + sourceDate + " to " + targetCalendarName + " starting on " + targetDate);
+    OutputHandler.getInstance().println(
+            "Copied " + dayEvents.size() + " event(s) from " + fromDay + " to " + toCal + " starting on " + toDay);
   }
 
   /**
    * Copies all events between two dates (inclusive) from the current calendar to the target calendar.
    * The first target date corresponds to the start of the source interval.
    */
-  public void copyEventsBetween(LocalDate sourceStart, LocalDate sourceEnd, String targetCalendarName, LocalDate targetStart) throws Exception {
-    CalendarManager sourceCal = getCurrentCalendar();
-    CalendarManager targetCal = calendars.get(targetCalendarName);
-    if (targetCal == null) {
-      throw new Exception("Target calendar not found: " + targetCalendarName);
+  @Override
+  public void copyEventsBetween(LocalDate sourceStart, LocalDate sourceEnd, String toCal, LocalDate targetStart) throws Exception {
+    CalendarManager baseCal = getCurrentCalendar();
+    CalendarManager destCal = allCalendars.get(toCal);
+    if (destCal == null) {
+      throw new Exception("Target calendar not found: " + toCal);
     }
-    LocalDate current = sourceStart;
+    LocalDate iterDay = sourceStart;
     int totalCopied = 0;
-    while (!current.isAfter(sourceEnd)) {
-      List<ICalendarEvent> eventsToCopy = sourceCal.getEventsOn(current);
-      for (ICalendarEvent ev : eventsToCopy) {
-        long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(sourceStart, current);
-        LocalDate newDate = targetStart.plusDays(daysDiff);
-        LocalDateTime newStart = newDate.atTime(ev.getStart().toLocalTime());
-        LocalDateTime newEnd = newDate.atTime(ev.getEnd().toLocalTime());
-        CalendarEvent newEvent = new CalendarEvent(ev.getEventName(), newStart, newEnd, ev.isAllDay());
-        newEvent.setDescription(ev.getDescription());
-        newEvent.setLocation(ev.getLocation());
-        newEvent.setPublic(ev.isPublic());
-        targetCal.addEvent(newEvent, true);
+    while (!iterDay.isAfter(sourceEnd)) {
+      List<ICalendarEvent> matchingEvents = baseCal.getEventsOn(iterDay);
+      for (ICalendarEvent ev : matchingEvents) {
+        long offsetDays = ChronoUnit.DAYS.between(sourceStart, iterDay);
+        LocalDate shiftDate = targetStart.plusDays(offsetDays);
+        LocalDateTime clonedStart = shiftDate.atTime(ev.getStart().toLocalTime());
+        LocalDateTime clonedEnd = shiftDate.atTime(ev.getEnd().toLocalTime());
+        CalendarEvent replicate = new CalendarEvent(ev.getEventName(), clonedStart, clonedEnd, ev.isAllDay());
+        replicate.setDescription(ev.getDescription());
+        replicate.setLocation(ev.getLocation());
+        replicate.setPublic(ev.isPublic());
+        destCal.addEvent(replicate, true);
         totalCopied++;
       }
-      current = current.plusDays(1);
+      iterDay = iterDay.plusDays(1);
     }
-    OutputHandler.getInstance().println("Copied " + totalCopied + " event(s) from between " + sourceStart + " and " + sourceEnd + " to " + targetCalendarName + " starting on " + targetStart);
+    OutputHandler.getInstance().println(
+            "Copied " + totalCopied + " event(s) from between " + sourceStart + " and " + sourceEnd + " to "
+                    + toCal + " starting on " + targetStart
+    );
   }
 
   // ===== Implementation of ICalendarManager methods =====
   // Here, for methods that deal with events, we delegate to the currently active calendar.
 
   @Override
-  public void addEvent(ICalendarEvent newEvent, boolean autoDecline) throws Exception {
-    getCurrentCalendar().addEvent(newEvent, autoDecline);
+  public void addEvent(ICalendarEvent newEntry, boolean shouldDecline) throws Exception {
+    getCurrentCalendar().addEvent(newEntry, shouldDecline);
   }
 
   @Override
-  public List<ICalendarEvent> getEventsOn(LocalDate date) {
+  public List<ICalendarEvent> getEventsOn(LocalDate exactDate) {
     try {
-      return getCurrentCalendar().getEventsOn(date);
+      return getCurrentCalendar().getEventsOn(exactDate);
     } catch (Exception e) {
       return new ArrayList<>();
     }
   }
 
   @Override
-  public List<ICalendarEvent> getEventsInRange(LocalDateTime startRange, LocalDateTime endRange) {
+  public List<ICalendarEvent> getEventsInRange(LocalDateTime lowBound, LocalDateTime highBound) {
     try {
-      return getCurrentCalendar().getEventsInRange(startRange, endRange);
+      return getCurrentCalendar().getEventsInRange(lowBound, highBound);
     } catch (Exception e) {
       return new ArrayList<>();
     }
   }
 
   @Override
-  public void exportToCSV(String fileName) {
+  public void exportToCSV(String filename) {
     try {
-      getCurrentCalendar().exportToCSV(fileName);
+      getCurrentCalendar().exportToCSV(filename);
     } catch (Exception e) {
       OutputHandler.getInstance().println("Error exporting CSV: " + e.getMessage());
     }
   }
 
   @Override
-  public void exportToGoogleCSV(String fileName) {
+  public void exportToGoogleCSV(String filename) {
     try {
-      getCurrentCalendar().exportToGoogleCSV(fileName);
+      getCurrentCalendar().exportToGoogleCSV(filename);
     } catch (Exception e) {
       OutputHandler.getInstance().println("Error exporting Google CSV: " + e.getMessage());
     }
   }
 
   @Override
-  public boolean isBusyAt(LocalDateTime dateTime) {
+  public boolean isBusyAt(LocalDateTime checkDateTime) {
     try {
-      return getCurrentCalendar().isBusyAt(dateTime);
+      return getCurrentCalendar().isBusyAt(checkDateTime);
     } catch (Exception e) {
       return false;
     }
   }
 
   @Override
-  public boolean editSingleEvent(String property, String eventName, LocalDateTime start, LocalDateTime end, String newValue) {
+  public boolean editSingleEvent(String property, String label, LocalDateTime startTs, LocalDateTime endTs, String updatedVal) {
     try {
-      return getCurrentCalendar().editSingleEvent(property, eventName, start, end, newValue);
+      return getCurrentCalendar().editSingleEvent(property, label, startTs, endTs, updatedVal);
     } catch (Exception e) {
       return false;
     }
   }
 
   @Override
-  public int editEventsByStart(String property, String eventName, LocalDateTime start, String newValue) {
+  public int editEventsByStart(String property, String label, LocalDateTime startTs, String updatedVal) {
     try {
-      return getCurrentCalendar().editEventsByStart(property, eventName, start, newValue);
+      return getCurrentCalendar().editEventsByStart(property, label, startTs, updatedVal);
     } catch (Exception e) {
       return 0;
     }
   }
 
   @Override
-  public int editEventsByName(String property, String eventName, String newValue) {
+  public int editEventsByName(String property, String label, String updatedVal) {
     try {
-      return getCurrentCalendar().editEventsByName(property, eventName, newValue);
+      return getCurrentCalendar().editEventsByName(property, label, updatedVal);
     } catch (Exception e) {
       return 0;
     }
@@ -262,15 +274,10 @@ public class MultiCalendarManager implements ICalendarManager {
     }
   }
 
-//  @Override
-//  public void accept(CommandParserVisitor visitor, String command) throws Exception {
-//    visitor.process(command, this);
-//  }
-
   public CalendarManager getCurrentCalendar() {
-    if (currentCalendar == null) {
+    if (activeCalendar == null) {
       throw new IllegalStateException("No calendar is currently in use.");
     }
-    return currentCalendar;
+    return activeCalendar;
   }
 }

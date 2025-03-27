@@ -24,229 +24,164 @@ public class CommandParser {
   /**
    * Processes a user command. Accepts commands that target either events or calendars.
    */
-  public static void processCommand(String userCommand, Object manager) throws Exception {
+  public static void processCommand(String cmdInput, Object mgrObj) throws Exception {
     // We support two types: MultiCalendarManager and ICalendarManager.
-    if (manager instanceof MultiCalendarManager) {
-      processMultiCalendarCommand(userCommand, (MultiCalendarManager) manager);
-    } else if (manager instanceof ICalendarManager) {
-      processEventCommand(userCommand, (ICalendarManager) manager);
+    if (mgrObj instanceof MultiCalendarManager) {
+      processMultiCalendarCommand(cmdInput, (MultiCalendarManager) mgrObj);
+    } else if (mgrObj instanceof ICalendarManager) {
+      processEventCommand(cmdInput, (ICalendarManager) mgrObj);
     } else {
       throw new Exception("Unsupported manager type.");
     }
   }
 
   // If the manager is a MultiCalendarManager, handle calendar-level commands:
-  private static void processMultiCalendarCommand(String userCommand, MultiCalendarManager multiCal) throws Exception {
-    String lower = userCommand.toLowerCase();
-    System.out.println("usharma lower: " + lower);
-    if (lower.startsWith("create calendar")) {
-      System.out.println(" create calendar  I have entered");
-      processCreateCalendar(userCommand, multiCal);
-    } else if (lower.startsWith("edit calendar")) {
-      System.out.println(" edit calendar  I have entered");
-      processEditCalendar(userCommand, multiCal);
-    } else if (lower.startsWith("use calendar")) {
-      System.out.println(" use calendar  I have entered");
-      processUseCalendar(userCommand, multiCal);
-    } else if (lower.startsWith("copy events on")) {
-      System.out.println("Copy event on I have entered");
-      processCopyEventsOn(userCommand, multiCal);
-    } else if (lower.startsWith("copy events between")) {
-      System.out.println("Copy event between I have entered");
-      processCopyEventsBetween(userCommand, multiCal);
-    } else if (lower.startsWith("copy event")) {
-      System.out.println("Copy event I have entered");
-      processCopyEvent(userCommand, multiCal);
+  private static void processMultiCalendarCommand(String multiCmd, MultiCalendarManager multiMgr) throws Exception {
+    String lowerCmd = multiCmd.toLowerCase();
+    if (lowerCmd.startsWith("create calendar")) {
+      processCreateCalendar(multiCmd, multiMgr);
+    } else if (lowerCmd.startsWith("edit calendar")) {
+      processEditCalendar(multiCmd, multiMgr);
+    } else if (lowerCmd.startsWith("use calendar")) {
+      processUseCalendar(multiCmd, multiMgr);
+    } else if (lowerCmd.startsWith("copy events on")) {
+      processCopyEventsOn(multiCmd, multiMgr);
+    } else if (lowerCmd.startsWith("copy events between")) {
+      processCopyEventsBetween(multiCmd, multiMgr);
+    } else if (lowerCmd.startsWith("copy event")) {
+      processCopyEvent(multiCmd, multiMgr);
     } else {
-      // Otherwise, assume it's an event command in the current calendar.
-      System.out.println(" userCommand  I have entered");
-      processEventCommand(userCommand, multiCal.getCurrentCalendar());
+      processEventCommand(multiCmd, multiMgr.getCurrentCalendar());
     }
   }
 
   // Process commands meant for a single calendar
-  private static void processEventCommand(String userCommand, ICalendarManager calendar) throws Exception {
-    String lower = userCommand.toLowerCase();
-    if (lower.startsWith("create event")) {
-      processCreateEvent(userCommand, calendar);
-    } else if (lower.startsWith("edit events")) {
-      processEditCommand(userCommand, calendar, true);
-    } else if (lower.startsWith("edit event")) {
-      processEditCommand(userCommand, calendar, false);
-    } else if (lower.startsWith("print events on")) {
-      processPrintEventsOn(userCommand, calendar);
-    } else if (lower.startsWith("print events from")) {
-      processPrintEventsRange(userCommand, calendar);
-    } else if (lower.startsWith("export cal")) {
-      processExportCal(userCommand, calendar);
-    } else if (lower.startsWith("export googlecsv")) {
-      processExportGoogleCSV(userCommand, calendar);
-    } else if (lower.startsWith("show status on")) {
-      processShowStatus(userCommand, calendar);
+  private static void processEventCommand(String eventCmd, ICalendarManager singleCal) throws Exception {
+    String lowerCmd = eventCmd.toLowerCase();
+    if (lowerCmd.startsWith("create event")) {
+      processCreateEvent(eventCmd, singleCal);
+    } else if (lowerCmd.startsWith("edit events")) {
+      processEditCommand(eventCmd, singleCal, true);
+    } else if (lowerCmd.startsWith("edit event")) {
+      processEditCommand(eventCmd, singleCal, false);
+    } else if (lowerCmd.startsWith("print events on")) {
+      processPrintEventsOn(eventCmd, singleCal);
+    } else if (lowerCmd.startsWith("print events from")) {
+      processPrintEventsRange(eventCmd, singleCal);
+    } else if (lowerCmd.startsWith("export cal")) {
+      processExportCal(eventCmd, singleCal);
+    } else if (lowerCmd.startsWith("export googlecsv")) {
+      processExportGoogleCSV(eventCmd, singleCal);
+    } else if (lowerCmd.startsWith("show status on")) {
+      processShowStatus(eventCmd, singleCal);
     } else {
-      throw new Exception("Invalid command: " + userCommand);
+      throw new Exception("Invalid command: " + eventCmd);
     }
   }
 
   // New calendar commands:
-  static void processCreateCalendar(String command, MultiCalendarManager multiCal) throws Exception {
+  public static void processCreateCalendar(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     // Expected format: create calendar --name <calName> --timezone <tz>
-    String[] tokens = command.split(" ");
-    if (tokens.length < 5) {
+    String[] segments = cmdLine.split(" ");
+    if (segments.length < 5) {
       throw new Exception("Invalid create calendar command format.");
     }
-    String calName = null, tz = null;
-    for (int i = 2; i < tokens.length; i++) {
-      if (tokens[i].equalsIgnoreCase("--name") && i + 1 < tokens.length) {
-        calName = tokens[++i];
-      } else if (tokens[i].equalsIgnoreCase("--timezone") && i + 1 < tokens.length) {
-        tz = tokens[++i];
+    String calendarName = null, timeZone = null;
+    for (int i = 2; i < segments.length; i++) {
+      if (segments[i].equalsIgnoreCase("--name") && i + 1 < segments.length) {
+        calendarName = segments[++i];
+      } else if (segments[i].equalsIgnoreCase("--timezone") && i + 1 < segments.length) {
+        timeZone = segments[++i];
       }
     }
-    if (calName == null || tz == null) {
+    if (calendarName == null || timeZone == null) {
       throw new Exception("Calendar name and timezone must be provided.");
     }
-    multiCal.createCalendar(calName, tz);
+    multiMgr.createCalendar(calendarName, timeZone);
   }
 
-  static void processEditCalendar(String command, MultiCalendarManager multiCal) throws Exception {
+  public static void processEditCalendar(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     // Expected format: edit calendar --name <calName> --property <prop> <newValue>
-    String[] tokens = command.split(" ");
-    if (tokens.length < 6) {
+    String[] segments = cmdLine.split(" ");
+    if (segments.length < 6) {
       throw new Exception("Invalid edit calendar command format.");
     }
-    String calName = null, property = null, newValue = null;
-    for (int i = 2; i < tokens.length; i++) {
-      if (tokens[i].equalsIgnoreCase("--name") && i + 1 < tokens.length) {
-        calName = tokens[++i];
-      } else if (tokens[i].equalsIgnoreCase("--property") && i + 1 < tokens.length) {
-        property = tokens[++i];
-        if (i + 1 < tokens.length) {
-          newValue = tokens[++i];
+    String calendarName = null, fieldName = null, newValue = null;
+    for (int i = 2; i < segments.length; i++) {
+      if (segments[i].equalsIgnoreCase("--name") && i + 1 < segments.length) {
+        calendarName = segments[++i];
+      } else if (segments[i].equalsIgnoreCase("--property") && i + 1 < segments.length) {
+        fieldName = segments[++i];
+        if (i + 1 < segments.length) {
+          newValue = segments[++i];
         }
       }
     }
-    if (calName == null || property == null || newValue == null) {
+    if (calendarName == null || fieldName == null || newValue == null) {
       throw new Exception("Invalid edit calendar command parameters.");
     }
-    multiCal.editCalendar(calName, property, newValue);
+    multiMgr.editCalendar(calendarName, fieldName, newValue);
   }
 
-  static void processUseCalendar(String command, MultiCalendarManager multiCal) throws Exception {
+  static void processUseCalendar(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     // Expected format: use calendar --name <calName>
-    String[] tokens = command.split(" ");
-    if (tokens.length < 3) {
+    String[] parts = cmdLine.split(" ");
+    if (parts.length < 3) {
       throw new Exception("Invalid use calendar command format.");
     }
-    String calName = null;
-    for (int i = 0; i < tokens.length; i++) {
-      if (tokens[i].equalsIgnoreCase("--name") && i + 1 < tokens.length) {
-        calName = tokens[++i];
+    String calendarName = null;
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i].equalsIgnoreCase("--name") && i + 1 < parts.length) {
+        calendarName = parts[++i];
       }
     }
-    if (calName == null) {
+    if (calendarName == null) {
       throw new Exception("Calendar name must be provided.");
     }
-    multiCal.useCalendar(calName);
+    multiMgr.useCalendar(calendarName);
   }
 
-    // Copy commands:
-    static void processCopyEvent(String command, MultiCalendarManager multiCal) throws Exception {
-      // Expected format:
-      // copy event <eventName> on <dateTime> --target <calendarName> to <dateTime>
-      String[] tokens = command.split(" ");
-      if (tokens.length < 8) {
-        throw new Exception("Invalid copy event command format.");
-      }
-
-      // We'll assume eventName is a single token for simplicity.
-      String eventName = tokens[2];
-      // "on" token at index 3; dateTime at index 4.
-      LocalDateTime sourceStart = LocalDateTime.parse(tokens[4], dateTimeFormatter);
-      // "--target" at index 5; target calendar name at index 6.
-      String targetCalendarName = tokens[6];
-      // "to" at index 7; target date/time at index 8.
-      LocalDateTime targetStart = LocalDateTime.parse(tokens[8], dateTimeFormatter);
-      multiCal.copyEvent(eventName, sourceStart, targetCalendarName, targetStart);
+  // Copy commands:
+  static void processCopyEvent(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
+    // Expected format:
+    // copy event <eventName> on <dateTime> --target <calendarName> to <dateTime>
+    String[] segments = cmdLine.split(" ");
+    if (segments.length < 8) {
+      throw new Exception("Invalid copy event command format.");
     }
 
-//    private static void processCopyEventsOn(String command, MultiCalendarManager multiCal) throws Exception {
-//      // Expected format:
-//      // copy events on <yyyy-MM-dd> --target <calendarName> to <yyyy-MM-dd>
-//      Scanner scanner = new Scanner(command);
-//
-//      // Consume the tokens "copy", "events", "on"
-//      if (!scanner.hasNext("copy")) {
-//        throw new Exception("Command must start with 'copy'");
-//      }
-//      scanner.next(); // copy
-//      if (!scanner.hasNext("events")) {
-//        throw new Exception("Expected 'events' after 'copy'");
-//      }
-//      scanner.next(); // events
-//      if (!scanner.hasNext("on")) {
-//        throw new Exception("Expected 'on' after 'copy events'");
-//      }
-//      scanner.next(); // on
-//
-//      // Next token is the source date
-//      if (!scanner.hasNext()) {
-//        throw new Exception("Expected source date.");
-//      }
-//      String sourceDateStr = scanner.next();
-//
-//      // Next, expect the --target token.
-//      if (!scanner.hasNext("--target")) {
-//        throw new Exception("Missing '--target' token in copy events on command.");
-//      }
-//      scanner.next(); // --target
-//
-//      // Next token is the target calendar name.
-//      if (!scanner.hasNext()) {
-//        throw new Exception("Expected target calendar name.");
-//      }
-//      String targetCalendarName = scanner.next();
-//
-//      // Next, expect the token "to"
-//      if (!scanner.hasNext("to")) {
-//        throw new Exception("Missing 'to' token in copy events on command.");
-//      }
-//      scanner.next(); // to
-//
-//      // Next token is the target date.
-//      if (!scanner.hasNext()) {
-//        throw new Exception("Expected target date.");
-//      }
-//      String targetDateStr = scanner.next();
-//
-//      // Parse the dates using your dateFormatter (yyyy-MM-dd)
-//      LocalDate sourceDate = LocalDate.parse(sourceDateStr, dateFormatter);
-//      LocalDate targetDate = LocalDate.parse(targetDateStr, dateFormatter);
-//
-//      multiCal.copyEventsOn(sourceDate, targetCalendarName, targetDate);
-//    }
+    // We'll assume eventName is a single token for simplicity.
+    String eventLabel = segments[2];
+    // "on" token at index 3; dateTime at index 4.
+    LocalDateTime sourceDateTime = LocalDateTime.parse(segments[4], dateTimeFormatter);
+    // "--target" at index 5; target calendar name at index 6.
+    String targetCal = segments[6];
+    // "to" at index 7; target date/time at index 8.
+    LocalDateTime targetDateTime = LocalDateTime.parse(segments[8], dateTimeFormatter);
+    multiMgr.copyEvent(eventLabel, sourceDateTime, targetCal, targetDateTime);
+  }
 
-  static void processCopyEventsOn(String command, MultiCalendarManager multiCal) throws Exception {
+  static void processCopyEventsOn(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     // Expected format:
     // copy events on <yyyy-MM-dd> --target <calendarName> to <yyyy-MM-dd>
-    Scanner scanner = new Scanner(command);
+    Scanner scanner = new Scanner(cmdLine);
 
     // Consume the tokens "copy", "events", "on"
-    String token = scanner.next(); // "copy"
-    token = scanner.next();        // "events"
-    token = scanner.next();        // "on"
+    scanner.next(); // "copy"
+    scanner.next(); // "events"
+    scanner.next(); // "on"
 
     // Next token: source date
-    String sourceDateStr = scanner.next();
+    String srcDateStr = scanner.next();
 
     // Next token should be "--target"
-    token = scanner.next();
+    String token = scanner.next();
     if (!token.equalsIgnoreCase("--target")) {
       throw new Exception("Missing '--target' token in copy events on command.");
     }
 
     // Next token: target calendar name
-    String targetCalendarName = scanner.next();
+    String targetCalName = scanner.next();
 
     // Next token should be "to"
     token = scanner.next();
@@ -255,224 +190,140 @@ public class CommandParser {
     }
 
     // Next token: target date
-    String targetDateStr = scanner.next();
+    String destDateStr = scanner.next();
 
     // Parse dates (expected format yyyy-MM-dd)
-    LocalDate sourceDate = LocalDate.parse(sourceDateStr, dateFormatter);
-    LocalDate targetDate = LocalDate.parse(targetDateStr, dateFormatter);
+    LocalDate srcDate = LocalDate.parse(srcDateStr, dateFormatter);
+    LocalDate dstDate = LocalDate.parse(destDateStr, dateFormatter);
 
-    multiCal.copyEventsOn(sourceDate, targetCalendarName, targetDate);
+    multiMgr.copyEventsOn(srcDate, targetCalName, dstDate);
   }
 
-
-
-//  private static void processCopyEventsBetween(String command, MultiCalendarManager multiCal) throws Exception {
-//      // Expected format:
-//      // copy events between <yyyy-MM-dd> and <yyyy-MM-dd> to --target <calendarName> <yyyy-MM-dd>
-//      Scanner scanner = new Scanner(command);
-//
-//      // Consume the tokens "copy", "events", "between"
-//      if (!scanner.hasNext("copy")) {
-//        throw new Exception("Command must start with 'copy'");
-//      }
-//      scanner.next(); // copy
-//      if (!scanner.hasNext("events")) {
-//        throw new Exception("Expected 'events' after 'copy'");
-//      }
-//      scanner.next(); // events
-//      if (!scanner.hasNext("between")) {
-//        throw new Exception("Expected 'between' after 'copy events'");
-//      }
-//      scanner.next(); // between
-//
-//      // Next token is the source start date.
-//      if (!scanner.hasNext()) {
-//        throw new Exception("Expected source start date.");
-//      }
-//      String sourceStartStr = scanner.next();
-//
-//      // Next token should be "and"
-//      if (!scanner.hasNext("and")) {
-//        throw new Exception("Missing 'and' token in copy events between command.");
-//      }
-//      scanner.next(); // and
-//
-//      // Next token is the source end date.
-//      if (!scanner.hasNext()) {
-//        throw new Exception("Expected source end date.");
-//      }
-//      String sourceEndStr = scanner.next();
-//
-//      // Next, expect the token "to"
-//      if (!scanner.hasNext("to")) {
-//        throw new Exception("Missing 'to' token in copy events between command.");
-//      }
-//      scanner.next(); // to
-//
-//      // Next, expect the "--target" token
-//      if (!scanner.hasNext("--target")) {
-//        throw new Exception("Missing '--target' token in copy events between command.");
-//      }
-//      scanner.next(); // --target
-//
-//      // Next token is the target calendar name.
-//      if (!scanner.hasNext()) {
-//        throw new Exception("Expected target calendar name.");
-//      }
-//      String targetCalendarName = scanner.next();
-//
-//      // Next token is the target start date.
-//      if (!scanner.hasNext()) {
-//        throw new Exception("Expected target start date.");
-//      }
-//      String targetStartStr = scanner.next();
-//
-//      LocalDate sourceStart = LocalDate.parse(sourceStartStr, dateFormatter);
-//      LocalDate sourceEnd = LocalDate.parse(sourceEndStr, dateFormatter);
-//      LocalDate targetStart = LocalDate.parse(targetStartStr, dateFormatter);
-//
-//      multiCal.copyEventsBetween(sourceStart, sourceEnd, targetCalendarName, targetStart);
-//    }
-
-  static void processCopyEventsBetween(String command, MultiCalendarManager multiCal) throws Exception {
+  static void processCopyEventsBetween(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     // Expected format:
     // copy events between <yyyy-MM-dd> and <yyyy-MM-dd> to --target <calendarName> <yyyy-MM-dd>
-    Scanner scanner = new Scanner(command);
+    Scanner scanner = new Scanner(cmdLine);
 
     // Consume tokens: "copy", "events", "between"
-    String token = scanner.next(); // "copy"
-    token = scanner.next();        // "events"
-    token = scanner.next();        // "between"
+    scanner.next(); // "copy"
+    scanner.next(); // "events"
+    scanner.next(); // "between"
 
     // Next token: source start date
-    String sourceStartStr = scanner.next();
+    String startDateStr = scanner.next();
 
     // Next token must be "and"
-    token = scanner.next();
-    if (!token.equalsIgnoreCase("and")) {
+    String nextTok = scanner.next();
+    if (!nextTok.equalsIgnoreCase("and")) {
       throw new Exception("Missing 'and' token in copy events between command.");
     }
 
     // Next token: source end date
-    String sourceEndStr = scanner.next();
+    String endDateStr = scanner.next();
 
     // Next token must be "to"
-    token = scanner.next();
-
-    System.out.println("token:"+token);
-
-    if (!token.equalsIgnoreCase("to")) {
+    nextTok = scanner.next();
+    if (!nextTok.equalsIgnoreCase("to")) {
       throw new Exception("Missing 'to' token in copy events between command.");
     }
 
     // Next token must be "--target"
-    token = scanner.next();
-
-    System.out.println("token for target:"+token);
-
-    if (!token.equalsIgnoreCase("--target")) {
+    nextTok = scanner.next();
+    if (!nextTok.equalsIgnoreCase("--target")) {
       throw new Exception("Missing '--target' token in copy events between command.");
     }
 
     // Next token: target calendar name
-    String targetCalendarName = scanner.next();
-
-    System.out.println("targetCalendarName:"+targetCalendarName);
+    String targetCal = scanner.next();
 
     // Next token: target start date
-    String targetStartStr = scanner.next();
+    String targetDateStr = scanner.next();
 
-    LocalDate sourceStart = LocalDate.parse(sourceStartStr, dateFormatter);
-    LocalDate sourceEnd = LocalDate.parse(sourceEndStr, dateFormatter);
-    LocalDate targetStart = LocalDate.parse(targetStartStr, dateFormatter);
+    LocalDate sourceStart = LocalDate.parse(startDateStr, dateFormatter);
+    LocalDate sourceEnd = LocalDate.parse(endDateStr, dateFormatter);
+    LocalDate targetStart = LocalDate.parse(targetDateStr, dateFormatter);
 
-    multiCal.copyEventsBetween(sourceStart, sourceEnd, targetCalendarName, targetStart);
+    multiMgr.copyEventsBetween(sourceStart, sourceEnd, targetCal, targetStart);
   }
 
 
-
-
-
-
-
   // --- The original event commands follow below ---
-  static void processCreateEvent(String userCommand, ICalendarManager calendar) throws Exception {
-    boolean autoDeclineFlag = false;
-    if (userCommand.toLowerCase().contains("--autodecline")) {
-      autoDeclineFlag = true;
-      userCommand = userCommand.replace("--autodecline", "").trim();
+  static void processCreateEvent(String eventCmd, ICalendarManager singleCal) throws Exception {
+    boolean declineFlag = false;
+    if (eventCmd.toLowerCase().contains("--autodecline")) {
+      declineFlag = true;
+      eventCmd = eventCmd.replace("--autodecline", "").trim();
     }
     // Ensure the command contains either " from " or " on "
-    if (!userCommand.contains(" from ") && !userCommand.contains(" on ")) {
+    if (!eventCmd.contains(" from ") && !eventCmd.contains(" on ")) {
       throw new Exception("Invalid create event command format.");
     }
 
-    if (userCommand.contains(" from ")) {
+    if (eventCmd.contains(" from ")) {
       // Timed event branch
-      String[] splittedFrom = userCommand.split(" from ", 2);
-      String rawName = splittedFrom[0].replace("create event", "").trim();
-      String leftover = splittedFrom[1];
-      if (!leftover.contains(" to ")) {
+      String[] partedFrom = eventCmd.split(" from ", 2);
+      String rawLabel = partedFrom[0].replace("create event", "").trim();
+      String remainStr = partedFrom[1];
+      if (!remainStr.contains(" to ")) {
         throw new Exception("Invalid format: missing 'to' keyword.");
       }
-      String[] splittedTo = leftover.split(" to ", 2);
-      String rawStart = splittedTo[0].trim();
-      String afterTo = splittedTo[1].trim();
-      if (afterTo.toLowerCase().contains(" repeats ")) {
-        String[] splittedRepeat = afterTo.split(" repeats ", 2);
-        String rawEnd = splittedRepeat[0].trim();
-        String repeatPart = splittedRepeat[1].trim();
-        LocalDateTime startDateTime = LocalDateTime.parse(rawStart, dateTimeFormatter);
-        LocalDateTime endDateTime = LocalDateTime.parse(rawEnd, dateTimeFormatter);
-        List<CalendarEvent> occurrences = RecurringEventGenerator.generateRecurringEvents(
-                rawName, startDateTime, endDateTime, repeatPart, false);
-        for (CalendarEvent singleOccurrence : occurrences) {
-          calendar.addEvent(singleOccurrence, autoDeclineFlag);
+      String[] partedTo = remainStr.split(" to ", 2);
+      String rawBegin = partedTo[0].trim();
+      String postTo = partedTo[1].trim();
+      if (postTo.toLowerCase().contains(" repeats ")) {
+        String[] partedRepeat = postTo.split(" repeats ", 2);
+        String rawFinish = partedRepeat[0].trim();
+        String recRule = partedRepeat[1].trim();
+        LocalDateTime beginDateTime = LocalDateTime.parse(rawBegin, dateTimeFormatter);
+        LocalDateTime finishDateTime = LocalDateTime.parse(rawFinish, dateTimeFormatter);
+        List<CalendarEvent> repeatedEvents = RecurringEventGenerator.generateRecurringEvents(
+                rawLabel, beginDateTime, finishDateTime, recRule, false);
+        for (CalendarEvent occurrence : repeatedEvents) {
+          singleCal.addEvent(occurrence, declineFlag);
         }
-        OutputHandler.getInstance().println("Recurring event created with " + occurrences.size() + " occurrences.");
+        OutputHandler.getInstance().println("Recurring event created with " + repeatedEvents.size() + " occurrences.");
       } else {
-        String rawEnd = afterTo.trim();
-        LocalDateTime startDateTime = LocalDateTime.parse(rawStart, dateTimeFormatter);
-        LocalDateTime endDateTime = LocalDateTime.parse(rawEnd, dateTimeFormatter);
-        CalendarEvent eventObj = new CalendarEvent(rawName, startDateTime, endDateTime, false);
-        calendar.addEvent(eventObj, autoDeclineFlag);
-        OutputHandler.getInstance().println("Event created: " + eventObj);
+        LocalDateTime beginDateTime = LocalDateTime.parse(rawBegin, dateTimeFormatter);
+        LocalDateTime finishDateTime = LocalDateTime.parse(postTo, dateTimeFormatter);
+        CalendarEvent createdEvent = new CalendarEvent(rawLabel, beginDateTime, finishDateTime, false);
+        singleCal.addEvent(createdEvent, declineFlag);
+        OutputHandler.getInstance().println("Event created: " + createdEvent);
       }
-    } else if (userCommand.contains(" on ")) {
+    } else if (eventCmd.contains(" on ")) {
       // All-day event branch
-      String[] splittedOn = userCommand.split(" on ", 2);
-      String rawName = splittedOn[0].replace("create event", "").trim();
-      String leftover = splittedOn[1].trim();
+      String[] partedOn = eventCmd.split(" on ", 2);
+      String rawLabel = partedOn[0].replace("create event", "").trim();
+      String leftover = partedOn[1].trim();
 
       // For safety, if a time is appended (like "T25:00"), take only the date part.
-      String dateStr = leftover;
-      if (dateStr.contains("T")) {
-        dateStr = dateStr.substring(0, dateStr.indexOf("T")).trim();
+      String dateString = leftover;
+      if (dateString.contains("T")) {
+        dateString = dateString.substring(0, dateString.indexOf("T")).trim();
       }
 
       if (leftover.toLowerCase().contains(" repeats ")) {
-        String[] splittedRepeat = leftover.split(" repeats ", 2);
-        dateStr = splittedRepeat[0].trim();
-        if (dateStr.contains("T")) {
-          dateStr = dateStr.substring(0, dateStr.indexOf("T")).trim();
+        String[] partedRepeat = leftover.split(" repeats ", 2);
+        dateString = partedRepeat[0].trim();
+        if (dateString.contains("T")) {
+          dateString = dateString.substring(0, dateString.indexOf("T")).trim();
         }
-        String repeatPart = splittedRepeat[1].trim();
-        LocalDate date = LocalDate.parse(dateStr, dateFormatter);
-        LocalDateTime startDateTime = date.atStartOfDay();
-        LocalDateTime endDateTime = date.plusDays(1).atStartOfDay();
-        List<CalendarEvent> occurrences = RecurringEventGenerator.generateRecurringEvents(
-                rawName, startDateTime, endDateTime, repeatPart, true);
-        for (CalendarEvent singleOccurrence : occurrences) {
-          calendar.addEvent(singleOccurrence, autoDeclineFlag);
+        String recRule = partedRepeat[1].trim();
+        LocalDate dateVal = LocalDate.parse(dateString, dateFormatter);
+        LocalDateTime beginDateTime = dateVal.atStartOfDay();
+        LocalDateTime finishDateTime = dateVal.plusDays(1).atStartOfDay();
+        List<CalendarEvent> repeatedEvents = RecurringEventGenerator.generateRecurringEvents(
+                rawLabel, beginDateTime, finishDateTime, recRule, true);
+        for (CalendarEvent occurrence : repeatedEvents) {
+          singleCal.addEvent(occurrence, declineFlag);
         }
-        OutputHandler.getInstance().println("Recurring all-day event created with " + occurrences.size() + " occurrences.");
+        OutputHandler.getInstance().println("Recurring all-day event created with " + repeatedEvents.size() + " occurrences.");
       } else {
-        LocalDate date = LocalDate.parse(dateStr, dateFormatter);
-        LocalDateTime startDateTime = date.atStartOfDay();
-        LocalDateTime endDateTime = date.plusDays(1).atStartOfDay();
-        CalendarEvent eventObj = new CalendarEvent(rawName, startDateTime, endDateTime, true);
-        calendar.addEvent(eventObj, autoDeclineFlag);
-        OutputHandler.getInstance().println("All-day event created: " + eventObj);
+        LocalDate dateVal = LocalDate.parse(dateString, dateFormatter);
+        LocalDateTime beginDateTime = dateVal.atStartOfDay();
+        LocalDateTime finishDateTime = dateVal.plusDays(1).atStartOfDay();
+        CalendarEvent createdEvent = new CalendarEvent(rawLabel, beginDateTime, finishDateTime, true);
+        singleCal.addEvent(createdEvent, declineFlag);
+        OutputHandler.getInstance().println("All-day event created: " + createdEvent);
       }
     } else {
       throw new Exception("Invalid create event command format.");
@@ -480,132 +331,130 @@ public class CommandParser {
   }
 
 
-  public static String getUpdateMessage(boolean updated) {
-    return updated ? "Event updated successfully." : "Event not found or update failed.";
+  public static String getUpdateMessage(boolean updatedFlag) {
+    return updatedFlag ? "Event updated successfully." : "Event not found or update failed.";
   }
 
-  static void processEditCommand(String userCommand, ICalendarManager calendar, boolean isPlural) throws Exception {
-    String prefix = isPlural ? "edit events" : "edit event";
-    String leftover = userCommand.substring(prefix.length()).trim();
-    if (leftover.contains(" with ")) {
-      String[] splittedWith = leftover.split(" with ", 2);
-      String beforeWith = splittedWith[0].trim();
-      String newValue = splittedWith[1].trim();
+  static void processEditCommand(String cmdLine, ICalendarManager singleCal, boolean isMulti) throws Exception {
+    String prefix = isMulti ? "edit events" : "edit event";
+    String remainingStr = cmdLine.substring(prefix.length()).trim();
+    if (remainingStr.contains(" with ")) {
+      String[] partedWith = remainingStr.split(" with ", 2);
+      String beforeWith = partedWith[0].trim();
+      String updatedVal = partedWith[1].trim();
       if (beforeWith.contains(" from ")) {
-        String[] splittedFrom = beforeWith.split(" from ", 2);
-        String firstPart = splittedFrom[0].trim();
-        String afterFrom = splittedFrom[1].trim();
-        if (!isPlural && !afterFrom.contains(" to ")) {
+        String[] partedFrom = beforeWith.split(" from ", 2);
+        String firstFragment = partedFrom[0].trim();
+        String postFrom = partedFrom[1].trim();
+        if (!isMulti && !postFrom.contains(" to ")) {
           throw new Exception("Missing 'to' clause for singular edit command.");
         }
-        String[] tokens = firstPart.split(" ", 2);
+        String[] tokens = firstFragment.split(" ", 2);
         if (tokens.length < 2) {
           throw new Exception("Invalid edit command format.");
         }
-        String property = tokens[0].trim();
-        String eventName = tokens[1].trim();
-        if (!isPlural) {
-          String[] splittedTo = afterFrom.split(" to ", 2);
-          if (splittedTo.length < 2) {
+        String attribute = tokens[0].trim();
+        String labelEvent = tokens[1].trim();
+        if (!isMulti) {
+          String[] partedTo = postFrom.split(" to ", 2);
+          if (partedTo.length < 2) {
             throw new Exception("Missing 'to' clause for singular edit command.");
           }
-          String rawStart = splittedTo[0].trim();
-          String rawEnd = splittedTo[1].trim();
-          LocalDateTime startDateTime = LocalDateTime.parse(rawStart, dateTimeFormatter);
-          LocalDateTime endDateTime = LocalDateTime.parse(rawEnd, dateTimeFormatter);
-          boolean updated = calendar.editSingleEvent(property, eventName, startDateTime, endDateTime, newValue);
+          String rawBegin = partedTo[0].trim();
+          String rawFinish = partedTo[1].trim();
+          LocalDateTime beginDateTime = LocalDateTime.parse(rawBegin, dateTimeFormatter);
+          LocalDateTime finishDateTime = LocalDateTime.parse(rawFinish, dateTimeFormatter);
+          boolean updated = singleCal.editSingleEvent(attribute, labelEvent, beginDateTime, finishDateTime, updatedVal);
           OutputHandler.getInstance().println(getUpdateMessage(updated));
         } else {
-          LocalDateTime startDateTime = LocalDateTime.parse(afterFrom, dateTimeFormatter);
-          int count = calendar.editEventsByStart(property, eventName, startDateTime, newValue);
-          OutputHandler.getInstance().println(count + " event(s) updated starting from " + startDateTime);
+          LocalDateTime beginDateTime = LocalDateTime.parse(postFrom, dateTimeFormatter);
+          int count = singleCal.editEventsByStart(attribute, labelEvent, beginDateTime, updatedVal);
+          OutputHandler.getInstance().println(count + " event(s) updated starting from " + beginDateTime);
         }
       } else {
         String[] tokens = beforeWith.split(" ", 2);
         if (tokens.length < 2) {
           throw new Exception("Invalid edit command format.");
         }
-        String property = tokens[0].trim();
-        String eventName = tokens[1].trim();
-        int count = calendar.editEventsByName(property, eventName, newValue);
-        OutputHandler.getInstance().println(count + " event(s) updated with new " + property);
+        String attribute = tokens[0].trim();
+        String labelEvent = tokens[1].trim();
+        int count = singleCal.editEventsByName(attribute, labelEvent, updatedVal);
+        OutputHandler.getInstance().println(count + " event(s) updated with new " + attribute);
       }
     } else {
       throw new Exception("Edit command must contain 'with' clause.");
     }
   }
 
-  static void processPrintEventsOn(String userCommand, ICalendarManager calendar) throws Exception {
-    String[] splittedOn = userCommand.split(" on ", 2);
-    if (splittedOn.length < 2) {
+  static void processPrintEventsOn(String cmdLine, ICalendarManager singleCal) throws Exception {
+    String[] partedOn = cmdLine.split(" on ", 2);
+    if (partedOn.length < 2) {
       throw new Exception("Invalid command format for printing events.");
     }
-    String dateStr = splittedOn[1].trim();
-    LocalDate date = LocalDate.parse(dateStr, dateFormatter);
-    List<ICalendarEvent> eventsOnDate = calendar.getEventsOn(date);
-    if (eventsOnDate.isEmpty()) {
-      OutputHandler.getInstance().println("No events found on " + date);
+    String dateStr = partedOn[1].trim();
+    LocalDate dateVal = LocalDate.parse(dateStr, dateFormatter);
+    List<ICalendarEvent> dayEvents = singleCal.getEventsOn(dateVal);
+    if (dayEvents.isEmpty()) {
+      OutputHandler.getInstance().println("No events found on " + dateVal);
     } else {
-      OutputHandler.getInstance().println("Events on " + date + ":");
-      for (ICalendarEvent singleEvent : eventsOnDate) {
-        OutputHandler.getInstance().println(" - " + singleEvent);
+      OutputHandler.getInstance().println("Events on " + dateVal + ":");
+      for (ICalendarEvent eventIt : dayEvents) {
+        OutputHandler.getInstance().println(" - " + eventIt);
       }
     }
   }
 
-  static void processPrintEventsRange(String userCommand, ICalendarManager calendar) throws Exception {
-    String[] splittedFrom = userCommand.split(" from ", 2);
-    if (splittedFrom.length < 2) {
+  static void processPrintEventsRange(String cmdLine, ICalendarManager singleCal) throws Exception {
+    String[] partedFrom = cmdLine.split(" from ", 2);
+    if (partedFrom.length < 2) {
       throw new Exception("Invalid command format for printing events in range.");
     }
-    String leftover = splittedFrom[1].trim();
-    if (!leftover.contains(" to ")) {
+    String remainStr = partedFrom[1].trim();
+    if (!remainStr.contains(" to ")) {
       throw new Exception("Missing 'to' clause in range query.");
     }
-    String[] splittedTo = leftover.split(" to ", 2);
-    String rawStart = splittedTo[0].trim();
-    String rawEnd = splittedTo[1].trim();
-    LocalDateTime startDateTime = LocalDateTime.parse(rawStart, dateTimeFormatter);
-    LocalDateTime endDateTime = LocalDateTime.parse(rawEnd, dateTimeFormatter);
-    List<ICalendarEvent> eventsInRange = calendar.getEventsInRange(startDateTime, endDateTime);
-    if (eventsInRange.isEmpty()) {
-      OutputHandler.getInstance().println("No events found between " + startDateTime + " and " + endDateTime);
+    String[] partedTo = remainStr.split(" to ", 2);
+    String rawBegin = partedTo[0].trim();
+    String rawFinish = partedTo[1].trim();
+    LocalDateTime beginDateTime = LocalDateTime.parse(rawBegin, dateTimeFormatter);
+    LocalDateTime finishDateTime = LocalDateTime.parse(rawFinish, dateTimeFormatter);
+    List<ICalendarEvent> rangeEvents = singleCal.getEventsInRange(beginDateTime, finishDateTime);
+    if (rangeEvents.isEmpty()) {
+      OutputHandler.getInstance().println("No events found between " + beginDateTime + " and " + finishDateTime);
     } else {
-      OutputHandler.getInstance().println("Events between " + startDateTime + " and " + endDateTime + ":");
-      for (ICalendarEvent singleEvent : eventsInRange) {
-        OutputHandler.getInstance().println(" - " + singleEvent);
+      OutputHandler.getInstance().println("Events between " + beginDateTime + " and " + finishDateTime + ":");
+      for (ICalendarEvent eventIt : rangeEvents) {
+        OutputHandler.getInstance().println(" - " + eventIt);
       }
     }
   }
 
-  static void processExportCal(String userCommand, ICalendarManager calendar) throws Exception {
-    String[] tokens = userCommand.split(" ");
-    if (tokens.length < 3) {
+  static void processExportCal(String cmdLine, ICalendarManager singleCal) throws Exception {
+    String[] segments = cmdLine.split(" ");
+    if (segments.length < 3) {
       throw new Exception("Invalid export command format.");
     }
-    String fileName = tokens[2].trim();
-    calendar.exportToCSV(fileName);
+    String fileName = segments[2].trim();
+    singleCal.exportToCSV(fileName);
   }
 
-  static void processExportGoogleCSV(String userCommand, ICalendarManager calendar) throws Exception {
-    String[] tokens = userCommand.split(" ");
-    if (tokens.length < 3) {
+  static void processExportGoogleCSV(String cmdLine, ICalendarManager singleCal) throws Exception {
+    String[] segments = cmdLine.split(" ");
+    if (segments.length < 3) {
       throw new Exception("Invalid export googlecsv command format.");
     }
-    String fileName = tokens[2].trim();
-    calendar.exportToGoogleCSV(fileName);
+    String fileName = segments[2].trim();
+    singleCal.exportToGoogleCSV(fileName);
   }
 
-  static void processShowStatus(String userCommand, ICalendarManager calendar) throws Exception {
-    String[] splittedOn = userCommand.split(" on ", 2);
-    if (splittedOn.length < 2) {
+  static void processShowStatus(String cmdLine, ICalendarManager singleCal) throws Exception {
+    String[] partedOn = cmdLine.split(" on ", 2);
+    if (partedOn.length < 2) {
       throw new Exception("Invalid command format for show status.");
     }
-    String rawDateTime = splittedOn[1].trim();
-    LocalDateTime dateTime = LocalDateTime.parse(rawDateTime, dateTimeFormatter);
-    boolean busyFlag = calendar.isBusyAt(dateTime);
-    OutputHandler.getInstance().println("Status at " + dateTime + ": " + (busyFlag ? "Busy" : "Available"));
+    String rawTimestamp = partedOn[1].trim();
+    LocalDateTime dateTimeCheck = LocalDateTime.parse(rawTimestamp, dateTimeFormatter);
+    boolean busyFlag = singleCal.isBusyAt(dateTimeCheck);
+    OutputHandler.getInstance().println("Status at " + dateTimeCheck + ": " + (busyFlag ? "Busy" : "Available"));
   }
 }
-
-
