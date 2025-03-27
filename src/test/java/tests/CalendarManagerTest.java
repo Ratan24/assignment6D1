@@ -21,7 +21,9 @@ import model.ICalendarEvent;
 import model.ICalendarManager;
 
 /**
- * Consist of all the test cases for Calendar Manager.
+ * Comprehensive test suite for the CalendarManager class that verifies its core functionality.
+ * Tests cover event management (adding, editing, conflict detection), querying (by date, time range, busy status),
+ * export capabilities (standard CSV and Google CSV), and boundary condition handling.
  */
 public class CalendarManagerTest {
 
@@ -29,16 +31,13 @@ public class CalendarManagerTest {
 
   @Test
   public void testAddEventNoConflict() throws Exception {
-    // Instantiate CalendarManager with a default name and timezone.
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
-    // Create an event with no conflict.
     CalendarEvent event = new CalendarEvent("Meeting",
-            LocalDateTime.parse("2024-05-01T10:00", dtf),
-            LocalDateTime.parse("2024-05-01T11:00", dtf),
-            false);
+        LocalDateTime.parse("2024-05-01T10:00", dtf),
+        LocalDateTime.parse("2024-05-01T11:00", dtf),
+        false);
 
-    // This should succeed without throwing an exception.
     manager.addEvent(event, true);
     assertEquals(1, manager.getAllEvents().size());
   }
@@ -49,13 +48,13 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting", LocalDateTime.of(2025
-            , 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        , 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(e1, true);
     ICalendarEvent e2 = new CalendarEvent("Lunch", LocalDateTime.of(2025
-            , 3, 1, 11, 30),
-            LocalDateTime.of(2025, 3, 1, 12, 30)
-            , false);
+        , 3, 1, 11, 30),
+        LocalDateTime.of(2025, 3, 1, 12, 30)
+        , false);
     manager.addEvent(e2, true);
     assertEquals(2, manager.getAllEvents().size());
   }
@@ -65,85 +64,47 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting", LocalDateTime.of(2025
-            , 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1
-                    , 11, 0), false);
+        , 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1
+            , 11, 0), false);
     manager.addEvent(e1, true);
 
     ICalendarEvent e2 = new CalendarEvent("Meeting2", LocalDateTime.of(2025
-            , 3, 1, 10, 30),
-            LocalDateTime.of(2025, 3, 1
-                    , 11, 30), false);
+        , 3, 1, 10, 30),
+        LocalDateTime.of(2025, 3, 1
+            , 11, 30), false);
     manager.addEvent(e2, true);
   }
 
   @Test(expected = Exception.class)
   public void testAddEventWithConflictAutoDecline() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-    // Add a non-conflicting event
     CalendarEvent event1 = new CalendarEvent("Meeting",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(event1, true);
 
-    // Add a conflicting event. This should throw an Exception because conflicts are now always declined.
     CalendarEvent event2 = new CalendarEvent("Meeting2",
-            LocalDateTime.of(2025, 3, 1, 10, 30),
-            LocalDateTime.of(2025, 3, 1, 11, 30), false);
+        LocalDateTime.of(2025, 3, 1, 10, 30),
+        LocalDateTime.of(2025, 3, 1, 11, 30), false);
     manager.addEvent(event2, false);
   }
-
-//  @Test(expected = Exception.class)
-//  public void testGetEventsOn_BoundaryConditionsConflict() throws Exception {
-//    ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-//
-//    // Add an all-day event covering March 5.
-//    ICalendarEvent allDay = new CalendarEvent("Holiday",
-//            LocalDate.of(2025, 3, 5).atStartOfDay(),
-//            LocalDate.of(2025, 3, 6).atStartOfDay(), true);
-//    manager.addEvent(allDay, true);
-//
-//    // Add a timed event that overlaps March 5.
-//    ICalendarEvent timed = new CalendarEvent("LateMeeting",
-//            LocalDateTime.of(2025, 3, 5, 23, 0),
-//            LocalDateTime.of(2025, 3, 6, 1, 0), false);
-//    // This should throw an exception because it conflicts with the all-day event.
-//    manager.addEvent(timed, true);
-//  }
-
-//  @Test(expected = Exception.class)
-//  public void testGetEventsOn_BoundaryConflict() throws Exception {
-//    ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-//
-//    // Create an all-day event that spans March 5.
-//    ICalendarEvent e1 = new CalendarEvent("Holiday",
-//            LocalDateTime.of(2025, 3, 5, 0, 0),
-//            LocalDateTime.of(2025, 3, 6, 0, 0), true);
-//    manager.addEvent(e1, true);
-//
-//    // Create a timed event on the same day (conflicting).
-//    ICalendarEvent e2 = new CalendarEvent("LateMeeting",
-//            LocalDateTime.of(2025, 3, 5, 23, 0),
-//            LocalDateTime.of(2025, 3, 6, 1, 0), false);
-//    // Should throw exception.
-//    manager.addEvent(e2, true);
-//  }
 
   @Test
   public void testGetEventsInRange() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting", LocalDateTime.of(2025
-            , 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        , 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     ICalendarEvent e2 = new CalendarEvent("Lunch", LocalDateTime.of(2025
-            , 3, 1, 12, 0),
-            LocalDateTime.of(2025, 3, 1, 13, 0), false);
+        , 3, 1, 12, 0),
+        LocalDateTime.of(2025, 3, 1, 13, 0), false);
     manager.addEvent(e1, false);
     manager.addEvent(e2, false);
     List<ICalendarEvent> range = manager.getEventsInRange(LocalDateTime.of(2025
-                    , 3, 1, 9, 0),
-            LocalDateTime.of(2025, 3, 1, 12, 30));
+            , 3, 1, 9, 0),
+        LocalDateTime.of(2025, 3, 1, 12, 30));
     assertEquals(2, range.size());
   }
 
@@ -152,14 +113,14 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting", LocalDateTime.of(2025
-            , 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1
-                    , 11, 0), false);
+        , 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1
+            , 11, 0), false);
     manager.addEvent(e1, false);
     assertTrue(manager.isBusyAt(LocalDateTime.of(2025, 3, 1
-            , 10, 30)));
+        , 10, 30)));
     assertFalse(manager.isBusyAt(LocalDateTime.of(2025, 3
-            , 1, 11, 30)));
+        , 1, 11, 30)));
   }
 
   @Test
@@ -167,13 +128,13 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting", LocalDateTime.of(2025
-            , 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        , 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(e1, false);
     boolean updated = manager.editSingleEvent("description", "Meeting",
-            LocalDateTime.of(2025, 3, 1
-                    , 10, 0), LocalDateTime.of(2025, 3
-                    , 1, 11, 0), "UpdatedDesc");
+        LocalDateTime.of(2025, 3, 1
+            , 10, 0), LocalDateTime.of(2025, 3
+            , 1, 11, 0), "UpdatedDesc");
     assertTrue(updated);
     assertEquals("UpdatedDesc", e1.getDescription());
   }
@@ -183,8 +144,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     boolean updated = manager.editSingleEvent("description"
-            , "NonExistent", LocalDateTime.now(),
-            LocalDateTime.now().plusHours(1), "Test");
+        , "NonExistent", LocalDateTime.now(),
+        LocalDateTime.now().plusHours(1), "Test");
     assertFalse(updated);
   }
 
@@ -193,18 +154,18 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Seminar"
-            , LocalDateTime.of(2025, 3, 3, 9, 0),
-            LocalDateTime.of(2025, 3, 3
-                    , 10, 30), false);
+        , LocalDateTime.of(2025, 3, 3, 9, 0),
+        LocalDateTime.of(2025, 3, 3
+            , 10, 30), false);
     ICalendarEvent e2 = new CalendarEvent("Seminar"
-            , LocalDateTime.of(2025, 3, 4, 9, 0),
-            LocalDateTime.of(2025, 3
-                    , 4, 10, 30), false);
+        , LocalDateTime.of(2025, 3, 4, 9, 0),
+        LocalDateTime.of(2025, 3
+            , 4, 10, 30), false);
     manager.addEvent(e1, false);
     manager.addEvent(e2, false);
     int count = manager.editEventsByStart("description", "Seminar",
-            LocalDateTime.of(2025, 3, 4
-                    , 0, 0), "Updated");
+        LocalDateTime.of(2025, 3, 4
+            , 0, 0), "Updated");
     assertEquals(1, count);
     assertEquals("Updated", e2.getDescription());
     assertEquals("", e1.getDescription());
@@ -215,17 +176,17 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Holiday"
-            , LocalDateTime.of(2025, 3, 5, 0, 0),
-            LocalDateTime.of(2025, 3
-                    , 6, 0, 0), true);
+        , LocalDateTime.of(2025, 3, 5, 0, 0),
+        LocalDateTime.of(2025, 3
+            , 6, 0, 0), true);
     ICalendarEvent e2 = new CalendarEvent("Holiday"
-            , LocalDateTime.of(2025, 3, 6, 0, 0),
-            LocalDateTime.of(2025, 3
-                    , 7, 0, 0), true);
+        , LocalDateTime.of(2025, 3, 6, 0, 0),
+        LocalDateTime.of(2025, 3
+            , 7, 0, 0), true);
     manager.addEvent(e1, false);
     manager.addEvent(e2, false);
     int count = manager.editEventsByName("location"
-            , "Holiday", "Beach");
+        , "Holiday", "Beach");
     assertEquals(2, count);
     assertEquals("Beach", e1.getLocation());
     assertEquals("Beach", e2.getLocation());
@@ -236,9 +197,9 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting"
-            , LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3
-                    , 1, 11, 0), false);
+        , LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3
+            , 1, 11, 0), false);
     manager.addEvent(e1, false);
     String fileName = "test_export.csv";
     manager.exportToCSV(fileName);
@@ -253,8 +214,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting", LocalDateTime.of(2025
-            , 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        , 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(e1, false);
     String fileName = "test_google.csv";
     manager.exportToGoogleCSV(fileName);
@@ -269,14 +230,14 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Event1",
-            LocalDateTime.of(2025, 3, 1, 12, 0),
-            LocalDateTime.of(2025, 3, 1, 13, 0), false);
+        LocalDateTime.of(2025, 3, 1, 12, 0),
+        LocalDateTime.of(2025, 3, 1, 13, 0), false);
     ICalendarEvent e2 = new CalendarEvent("Event2",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     ICalendarEvent e3 = new CalendarEvent("Event3",
-            LocalDateTime.of(2025, 3, 1, 14, 0),
-            LocalDateTime.of(2025, 3, 1, 15, 0), false);
+        LocalDateTime.of(2025, 3, 1, 14, 0),
+        LocalDateTime.of(2025, 3, 1, 15, 0), false);
     manager.addEvent(e1, false);
     manager.addEvent(e2, false);
     manager.addEvent(e3, false);
@@ -292,13 +253,13 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Overnight",
-            LocalDateTime.of(2025, 3, 1, 23, 0),
-            LocalDateTime.of(2025, 3, 2, 1, 0), false);
+        LocalDateTime.of(2025, 3, 1, 23, 0),
+        LocalDateTime.of(2025, 3, 2, 1, 0), false);
     manager.addEvent(e1, false);
     List<ICalendarEvent> eventsDay1 = manager.getEventsOn(LocalDate.of(2025, 3
-            , 1));
+        , 1));
     List<ICalendarEvent> eventsDay2 = manager.getEventsOn(LocalDate.of(2025, 3
-            , 2));
+        , 2));
     assertTrue("Event should be found on start day", eventsDay1.contains(e1));
     assertTrue("Event should be found on end day", eventsDay2.contains(e1));
   }
@@ -308,13 +269,13 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("Meeting",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(e1, false);
 
     List<ICalendarEvent> range = manager.getEventsInRange(
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0));
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0));
 
     assertTrue("Event should be in range", range.contains(e1));
   }
@@ -324,15 +285,15 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     CalendarEvent e1 = new CalendarEvent("BusyTest",
-            LocalDateTime.of(2025, 3, 1, 9, 0),
-            LocalDateTime.of(2025, 3, 1, 10, 0), false);
+        LocalDateTime.of(2025, 3, 1, 9, 0),
+        LocalDateTime.of(2025, 3, 1, 10, 0), false);
     manager.addEvent(e1, false);
 
     assertTrue(manager.isBusyAt(LocalDateTime.of(2025, 3, 1
-            , 9, 0)));
+        , 9, 0)));
 
     assertFalse(manager.isBusyAt(LocalDateTime.of(2025, 3
-            , 1, 10, 0)));
+        , 1, 10, 0)));
   }
 
   @Test
@@ -340,7 +301,7 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     CalendarEvent e1 = new CalendarEvent("TestEvent",
-            LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
+        LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
 
     try {
       manager.addEvent(e1, false);
@@ -350,13 +311,13 @@ public class CalendarManagerTest {
 
 
     boolean updated = manager.editSingleEvent("description", "TestEvent"
-            , e1.getStart(), e1.getEnd(), "NewDesc");
+        , e1.getStart(), e1.getEnd(), "NewDesc");
     assertTrue(updated);
     assertEquals("NewDesc", e1.getDescription());
 
 
     boolean result = manager.editSingleEvent("unknown", "TestEvent"
-            , e1.getStart(), e1.getEnd(), "X");
+        , e1.getStart(), e1.getEnd(), "X");
     assertFalse(result);
   }
 
@@ -365,16 +326,16 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("GroupEdit",
-            LocalDateTime.of(2025, 3, 1, 8, 0),
-            LocalDateTime.of(2025, 3, 1, 9, 0), false);
+        LocalDateTime.of(2025, 3, 1, 8, 0),
+        LocalDateTime.of(2025, 3, 1, 9, 0), false);
     ICalendarEvent e2 = new CalendarEvent("GroupEdit",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(e1, false);
     manager.addEvent(e2, false);
     int count = manager.editEventsByStart("description", "GroupEdit",
-            LocalDateTime.of(2025, 3, 1, 9, 0)
-            , "Updated");
+        LocalDateTime.of(2025, 3, 1, 9, 0)
+        , "Updated");
     assertEquals(1, count);
     assertEquals("", e1.getDescription());
     assertEquals("Updated", e2.getDescription());
@@ -385,15 +346,15 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("SameName",
-            LocalDateTime.of(2025, 3, 1, 8, 0),
-            LocalDateTime.of(2025, 3, 1, 9, 0), false);
+        LocalDateTime.of(2025, 3, 1, 8, 0),
+        LocalDateTime.of(2025, 3, 1, 9, 0), false);
     ICalendarEvent e2 = new CalendarEvent("SameName",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(e1, false);
     manager.addEvent(e2, false);
     int count = manager.editEventsByName("location", "SameName"
-            , "Office");
+        , "Office");
     assertEquals(2, count);
     assertEquals("Office", e1.getLocation());
     assertEquals("Office", e2.getLocation());
@@ -404,7 +365,7 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("CopyTest",
-            LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
+        LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
     manager.addEvent(e1, false);
     List<ICalendarEvent> copy = manager.getAllEvents();
     copy.clear();
@@ -418,8 +379,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("CSVTest",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     e1.setDescription("Desc");
     e1.setLocation("Loc");
     e1.setPublic(false);
@@ -439,8 +400,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent e1 = new CalendarEvent("GoogleTest",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     e1.setDescription("GDesc");
     e1.setLocation("GLoc");
     e1.setPublic(true);
@@ -451,7 +412,7 @@ public class CalendarManagerTest {
     assertTrue(file.exists());
     String content = new String(Files.readAllBytes(file.toPath()));
     assertTrue(content.contains("Subject,Start Date,Start Time,End Date" +
-            ",End Time,All Day Event,Description,Location,Private"));
+        ",End Time,All Day Event,Description,Location,Private"));
     assertTrue(content.contains("GoogleTest"));
     file.delete();
   }
@@ -478,17 +439,17 @@ public class CalendarManagerTest {
 
 
     ICalendarEvent event = new CalendarEvent("OriginalName",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
     } catch (Exception e) {
       fail("Unexpected exception: " + e.getMessage());
     }
     boolean updated = manager.editSingleEvent("name", "OriginalName",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0)
-            , "NewName");
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0)
+        , "NewName");
     assertTrue("Event should be updated", updated);
     assertEquals("NewName", manager.getAllEvents().get(0).getEventName());
   }
@@ -498,66 +459,49 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("TestEvent",
-            LocalDateTime.of(2025, 3, 1, 9, 0),
-            LocalDateTime.of(2025, 3, 1, 10, 0), false);
+        LocalDateTime.of(2025, 3, 1, 9, 0),
+        LocalDateTime.of(2025, 3, 1, 10, 0), false);
     try {
       manager.addEvent(event, false);
     } catch (Exception e) {
       fail("Unexpected exception: " + e.getMessage());
     }
     assertTrue(manager.isBusyAt(LocalDateTime.of(2025, 3, 1
-            , 9, 0)));
+        , 9, 0)));
 
     assertFalse(manager.isBusyAt(LocalDateTime.of(2025, 3, 1
-            , 10, 0)));
+        , 10, 0)));
   }
 
   @Test(expected = Exception.class)
   public void testAddEventWithConflictRejection() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     CalendarEvent event1 = new CalendarEvent("Meeting",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(event1, true);
 
-    // Attempt to add a conflicting event. This should throw an exception.
     CalendarEvent event2 = new CalendarEvent("Meeting2",
-            LocalDateTime.of(2025, 3, 1, 10, 30),
-            LocalDateTime.of(2025, 3, 1, 11, 30), false);
+        LocalDateTime.of(2025, 3, 1, 10, 30),
+        LocalDateTime.of(2025, 3, 1, 11, 30), false);
     manager.addEvent(event2, true);
   }
-
-//  @Test(expected = Exception.class)
-//  public void testGetEventsOn_BoundaryConditions() throws Exception {
-//    ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-//
-//    ICalendarEvent allDay = new CalendarEvent("Holiday",
-//            LocalDate.of(2025, 3, 5).atStartOfDay(),
-//            LocalDate.of(2025, 3, 6).atStartOfDay(), true);
-//    manager.addEvent(allDay, true);
-//
-//    ICalendarEvent timed = new CalendarEvent("LateMeeting",
-//            LocalDateTime.of(2025, 3, 5, 23, 0),
-//            LocalDateTime.of(2025, 3, 6, 1, 0), false);
-//    // This should throw an exception because the timed event conflicts with the all-day event.
-//    manager.addEvent(timed, true);
-//  }
 
   @Test
   public void testGetEventsInRange_Boundary() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("Meeting",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
     } catch(Exception e) { fail(e.getMessage()); }
 
     assertTrue(manager.getEventsInRange(
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3
-                    , 1, 11, 0)).contains(event));
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3
+            , 1, 11, 0)).contains(event));
   }
 
   @Test
@@ -565,15 +509,15 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("BusyEvent",
-            LocalDateTime.of(2025, 3, 1, 9, 0),
-            LocalDateTime.of(2025, 3, 1, 10, 0), false);
+        LocalDateTime.of(2025, 3, 1, 9, 0),
+        LocalDateTime.of(2025, 3, 1, 10, 0), false);
     try {
       manager.addEvent(event, false);
     } catch(Exception e) { fail(e.getMessage()); }
     assertTrue(manager.isBusyAt(LocalDateTime.of(2025
-            , 3, 1, 9, 0)));
+        , 3, 1, 9, 0)));
     assertFalse(manager.isBusyAt(LocalDateTime.of(2025, 3
-            , 1, 10, 0)));
+        , 1, 10, 0)));
   }
 
   @Test
@@ -581,8 +525,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("CSVEvent",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     event.setDescription("TestDesc");
     event.setLocation("TestLoc");
     event.setPublic(false);
@@ -611,29 +555,29 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("TestEvent",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
     } catch(Exception e) { fail(e.getMessage()); }
 
     boolean updated = manager.editSingleEvent("name", "TestEvent",
-            event.getStart(), event.getEnd(), "NewName");
+        event.getStart(), event.getEnd(), "NewName");
     assertTrue(updated);
     assertEquals("NewName", manager.getAllEvents().get(0).getEventName());
 
     updated = manager.editSingleEvent("description", "NewName",
-            event.getStart(), event.getEnd(), "NewDesc");
+        event.getStart(), event.getEnd(), "NewDesc");
     assertTrue(updated);
     assertEquals("NewDesc", manager.getAllEvents().get(0).getDescription());
 
     updated = manager.editSingleEvent("location", "NewName",
-            event.getStart(), event.getEnd(), "NewLoc");
+        event.getStart(), event.getEnd(), "NewLoc");
     assertTrue(updated);
     assertEquals("NewLoc", manager.getAllEvents().get(0).getLocation());
 
     updated = manager.editSingleEvent("public", "NewName",
-            event.getStart(), event.getEnd(), "true");
+        event.getStart(), event.getEnd(), "true");
     assertTrue(updated);
     assertTrue(manager.getAllEvents().get(0).isPublic());
   }
@@ -643,7 +587,7 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("CopyTest",
-            LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
+        LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
     manager.addEvent(event, false);
     int originalSize = manager.getAllEvents().size();
 
@@ -658,8 +602,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("TestEvent",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
     } catch (Exception e) {
@@ -667,30 +611,30 @@ public class CalendarManagerTest {
     }
 
     boolean updated = manager.editSingleEvent("name", "TestEvent"
-            , event.getStart(), event.getEnd(), "NewName");
+        , event.getStart(), event.getEnd(), "NewName");
     assertTrue("Event name should be updated", updated);
     assertEquals("NewName", manager.getAllEvents().get(0).getEventName());
 
 
     updated = manager.editSingleEvent("description", "NewName"
-            , event.getStart(), event.getEnd(), "NewDescription");
+        , event.getStart(), event.getEnd(), "NewDescription");
     assertTrue("Event description should be updated", updated);
     assertEquals("NewDescription", manager.getAllEvents().get(0).getDescription());
 
 
     updated = manager.editSingleEvent("location", "NewName"
-            , event.getStart(), event.getEnd(), "NewLocation");
+        , event.getStart(), event.getEnd(), "NewLocation");
     assertTrue("Event location should be updated", updated);
     assertEquals("NewLocation", manager.getAllEvents().get(0).getLocation());
 
 
     updated = manager.editSingleEvent("public", "NewName"
-            , event.getStart(), event.getEnd(), "false");
+        , event.getStart(), event.getEnd(), "false");
     assertTrue("Event public flag should be updated", updated);
     assertFalse(manager.getAllEvents().get(0).isPublic());
 
     updated = manager.editSingleEvent("public", "NewName"
-            , event.getStart(), event.getEnd(), "true");
+        , event.getStart(), event.getEnd(), "true");
     assertTrue("Event public flag should be updated", updated);
     assertTrue(manager.getAllEvents().get(0).isPublic());
   }
@@ -700,8 +644,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("TestEvent",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
     } catch(Exception e){
@@ -709,45 +653,28 @@ public class CalendarManagerTest {
     }
 
     boolean updated = manager.editSingleEvent("invalid"
-            , "TestEvent", event.getStart(), event.getEnd(), "value");
+        , "TestEvent", event.getStart(), event.getEnd(), "value");
     assertFalse("Editing an invalid property should return false", updated);
   }
-
-//  @Test(expected = Exception.class)
-//  public void testGetEventsOn_BoundaryReplicate() throws Exception {
-//    ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-//
-//    ICalendarEvent allDay = new CalendarEvent("Holiday",
-//            LocalDate.of(2025, 3, 5).atStartOfDay(),
-//            LocalDate.of(2025, 3, 6).atStartOfDay(), true);
-//    manager.addEvent(allDay, true); // Using true to ensure conflicts are auto-declined
-//
-//    // Attempt to add a conflicting timed event.
-//    ICalendarEvent timed = new CalendarEvent("LateMeeting",
-//            LocalDateTime.of(2025, 3, 5, 23, 0),
-//            LocalDateTime.of(2025, 3, 6, 1, 0), false);
-//    // This should throw an exception due to conflict.
-//    manager.addEvent(timed, true);
-//  }
 
   @Test
   public void testIsBusyAt_BoundaryReplicate() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("BusyTest",
-            LocalDateTime.of(2025, 3, 1, 9, 0),
-            LocalDateTime.of(2025, 3, 1, 10, 0), false);
+        LocalDateTime.of(2025, 3, 1, 9, 0),
+        LocalDateTime.of(2025, 3, 1, 10, 0), false);
     try {
       manager.addEvent(event, false);
     } catch(Exception e){
       fail(e.getMessage());
     }
     assertTrue("Should be busy at start time"
-            , manager.isBusyAt(LocalDateTime.of(2025
-                    , 3, 1, 9, 0)));
+        , manager.isBusyAt(LocalDateTime.of(2025
+            , 3, 1, 9, 0)));
     assertFalse("Should not be busy at end time"
-            , manager.isBusyAt(LocalDateTime.of(2025
-                    , 3, 1, 10, 0)));
+        , manager.isBusyAt(LocalDateTime.of(2025
+            , 3, 1, 10, 0)));
   }
 
   @Test
@@ -755,8 +682,8 @@ public class CalendarManagerTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     ICalendarEvent event = new CalendarEvent("CSVTest",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     event.setDescription("Desc");
     event.setLocation("Loc");
     event.setPublic(false);
@@ -783,7 +710,6 @@ public class CalendarManagerTest {
   @Test
   public void testExportToCSV_ErrorReplicate() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-
 
     String invalidFileName = "/invalid_path/export.csv";
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -820,7 +746,6 @@ public class CalendarManagerTest {
     LocalDateTime start = LocalDateTime.of(2025, 3, 30, 10, 0);
     LocalDateTime end = LocalDateTime.of(2025, 3, 30, 11, 0);
     CalendarEvent event = new CalendarEvent("Meeting", start, end, false);
-    // No description/location, public by default
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     String expected = "Meeting from " + start.format(dtf) + " to " + end.format(dtf) + ", Public";
     assertEquals(expected, event.toString());
@@ -837,28 +762,27 @@ public class CalendarManagerTest {
   @Test
   public void testConflictsWith_NonOverlapping() {
     CalendarEvent event1 = new CalendarEvent("Event1", LocalDateTime.of(2025, 3, 30, 9, 0),
-            LocalDateTime.of(2025, 3, 30, 10, 0), false);
+        LocalDateTime.of(2025, 3, 30, 10, 0), false);
     CalendarEvent event2 = new CalendarEvent("Event2", LocalDateTime.of(2025, 3, 30, 10, 0),
-            LocalDateTime.of(2025, 3, 30, 11, 0), false);
+        LocalDateTime.of(2025, 3, 30, 11, 0), false);
     assertFalse(event1.conflictsWith(event2));
   }
 
   @Test
   public void testConflictsWith_Overlapping() {
     CalendarEvent event1 = new CalendarEvent("Event1", LocalDateTime.of(2025, 3, 30, 9, 0),
-            LocalDateTime.of(2025, 3, 30, 11, 0), false);
+        LocalDateTime.of(2025, 3, 30, 11, 0), false);
     CalendarEvent event2 = new CalendarEvent("Event2", LocalDateTime.of(2025, 3, 30, 10, 0),
-            LocalDateTime.of(2025, 3, 30, 12, 0), false);
+        LocalDateTime.of(2025, 3, 30, 12, 0), false);
     assertTrue(event1.conflictsWith(event2));
   }
 
   @Test
   public void testConflictsWith_AllDay() {
     CalendarEvent event1 = new CalendarEvent("Holiday", LocalDateTime.of(2025, 3, 30, 0, 0),
-            LocalDateTime.of(2025, 3, 31, 0, 0), true);
+        LocalDateTime.of(2025, 3, 31, 0, 0), true);
     CalendarEvent event2 = new CalendarEvent("Another Holiday", LocalDateTime.of(2025, 3, 30, 0, 0),
-            LocalDateTime.of(2025, 3, 31, 0, 0), true);
+        LocalDateTime.of(2025, 3, 31, 0, 0), true);
     assertTrue(event1.conflictsWith(event2));
   }
-
 }

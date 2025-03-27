@@ -4,18 +4,26 @@ import controller.CalendarController;
 import model.MultiCalendarManager;
 import view.OutputHandler;
 
+/**
+ * Main application class for the Calendar application.
+ * Handles command-line arguments and initializes the application.
+ */
 public class CalendarApp {
+  /**
+   * Entry point of the application.
+   * Supports interactive and headless modes.
+   *
+   * @param args Command-line arguments
+   */
   public static void main(String[] args) {
     try {
       if (args.length < 2) {
         OutputHandler.getInstance().println("Usage: --mode interactive OR --mode headless" +
-                " <commandFile.txt>");
+            " <commandFile.txt>");
         return;
       }
 
-      // Create a MultiCalendarManager instance.
       MultiCalendarManager multiCal = new MultiCalendarManager();
-      // Initialize the controller with the multi-calendar manager.
       CalendarController controller = new CalendarController(multiCal);
 
       if (args[0].equalsIgnoreCase("--mode")) {

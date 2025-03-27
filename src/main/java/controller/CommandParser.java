@@ -15,7 +15,7 @@ import view.OutputHandler;
 
 /**
  * CommandParser interprets user commands and delegates work to the appropriate methods.
- * It now supports additional commands for multiple calendars and event copying.
+ * It supports additional commands for multiple calendars and event copying.
  */
 public class CommandParser {
   private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
@@ -23,9 +23,12 @@ public class CommandParser {
 
   /**
    * Processes a user command. Accepts commands that target either events or calendars.
+   *
+   * @param cmdInput The command string to process
+   * @param mgrObj The manager object (MultiCalendarManager or ICalendarManager)
+   * @throws Exception If the command is invalid or execution fails
    */
   public static void processCommand(String cmdInput, Object mgrObj) throws Exception {
-    // We support two types: MultiCalendarManager and ICalendarManager.
     if (mgrObj instanceof MultiCalendarManager) {
       processMultiCalendarCommand(cmdInput, (MultiCalendarManager) mgrObj);
     } else if (mgrObj instanceof ICalendarManager) {
@@ -35,7 +38,6 @@ public class CommandParser {
     }
   }
 
-  // If the manager is a MultiCalendarManager, handle calendar-level commands:
   private static void processMultiCalendarCommand(String multiCmd, MultiCalendarManager multiMgr) throws Exception {
     String lowerCmd = multiCmd.toLowerCase();
     if (lowerCmd.startsWith("create calendar")) {
@@ -55,7 +57,6 @@ public class CommandParser {
     }
   }
 
-  // Process commands meant for a single calendar
   private static void processEventCommand(String eventCmd, ICalendarManager singleCal) throws Exception {
     String lowerCmd = eventCmd.toLowerCase();
     if (lowerCmd.startsWith("create event")) {
@@ -79,9 +80,14 @@ public class CommandParser {
     }
   }
 
-  // New calendar commands:
+  /**
+   * Processes a command to create a new calendar.
+   *
+   * @param cmdLine The command string to process
+   * @param multiMgr The MultiCalendarManager instance
+   * @throws Exception If the command format is invalid
+   */
   public static void processCreateCalendar(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
-    // Expected format: create calendar --name <calName> --timezone <tz>
     String[] segments = cmdLine.split(" ");
     if (segments.length < 5) {
       throw new Exception("Invalid create calendar command format.");
@@ -100,8 +106,14 @@ public class CommandParser {
     multiMgr.createCalendar(calendarName, timeZone);
   }
 
+  /**
+   * Processes a command to edit a calendar's properties.
+   *
+   * @param cmdLine The command string to process
+   * @param multiMgr The MultiCalendarManager instance
+   * @throws Exception If the command format is invalid
+   */
   public static void processEditCalendar(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
-    // Expected format: edit calendar --name <calName> --property <prop> <newValue>
     String[] segments = cmdLine.split(" ");
     if (segments.length < 6) {
       throw new Exception("Invalid edit calendar command format.");
@@ -123,8 +135,7 @@ public class CommandParser {
     multiMgr.editCalendar(calendarName, fieldName, newValue);
   }
 
-  static void processUseCalendar(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
-    // Expected format: use calendar --name <calName>
+  private static void processUseCalendar(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     String[] parts = cmdLine.split(" ");
     if (parts.length < 3) {
       throw new Exception("Invalid use calendar command format.");
@@ -141,102 +152,75 @@ public class CommandParser {
     multiMgr.useCalendar(calendarName);
   }
 
-  // Copy commands:
-  static void processCopyEvent(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
-    // Expected format:
-    // copy event <eventName> on <dateTime> --target <calendarName> to <dateTime>
+  private static void processCopyEvent(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     String[] segments = cmdLine.split(" ");
     if (segments.length < 8) {
       throw new Exception("Invalid copy event command format.");
     }
 
-    // We'll assume eventName is a single token for simplicity.
     String eventLabel = segments[2];
-    // "on" token at index 3; dateTime at index 4.
     LocalDateTime sourceDateTime = LocalDateTime.parse(segments[4], dateTimeFormatter);
-    // "--target" at index 5; target calendar name at index 6.
     String targetCal = segments[6];
-    // "to" at index 7; target date/time at index 8.
     LocalDateTime targetDateTime = LocalDateTime.parse(segments[8], dateTimeFormatter);
     multiMgr.copyEvent(eventLabel, sourceDateTime, targetCal, targetDateTime);
   }
 
-  static void processCopyEventsOn(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
-    // Expected format:
-    // copy events on <yyyy-MM-dd> --target <calendarName> to <yyyy-MM-dd>
+  private static void processCopyEventsOn(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     Scanner scanner = new Scanner(cmdLine);
 
-    // Consume the tokens "copy", "events", "on"
-    scanner.next(); // "copy"
-    scanner.next(); // "events"
-    scanner.next(); // "on"
+    scanner.next();
+    scanner.next();
+    scanner.next();
 
-    // Next token: source date
     String srcDateStr = scanner.next();
 
-    // Next token should be "--target"
     String token = scanner.next();
     if (!token.equalsIgnoreCase("--target")) {
       throw new Exception("Missing '--target' token in copy events on command.");
     }
 
-    // Next token: target calendar name
     String targetCalName = scanner.next();
 
-    // Next token should be "to"
     token = scanner.next();
     if (!token.equalsIgnoreCase("to")) {
       throw new Exception("Missing 'to' token in copy events on command.");
     }
 
-    // Next token: target date
     String destDateStr = scanner.next();
 
-    // Parse dates (expected format yyyy-MM-dd)
     LocalDate srcDate = LocalDate.parse(srcDateStr, dateFormatter);
     LocalDate dstDate = LocalDate.parse(destDateStr, dateFormatter);
 
     multiMgr.copyEventsOn(srcDate, targetCalName, dstDate);
   }
 
-  static void processCopyEventsBetween(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
-    // Expected format:
-    // copy events between <yyyy-MM-dd> and <yyyy-MM-dd> to --target <calendarName> <yyyy-MM-dd>
+  private static void processCopyEventsBetween(String cmdLine, MultiCalendarManager multiMgr) throws Exception {
     Scanner scanner = new Scanner(cmdLine);
 
-    // Consume tokens: "copy", "events", "between"
-    scanner.next(); // "copy"
-    scanner.next(); // "events"
-    scanner.next(); // "between"
+    scanner.next();
+    scanner.next();
+    scanner.next();
 
-    // Next token: source start date
     String startDateStr = scanner.next();
 
-    // Next token must be "and"
     String nextTok = scanner.next();
     if (!nextTok.equalsIgnoreCase("and")) {
       throw new Exception("Missing 'and' token in copy events between command.");
     }
 
-    // Next token: source end date
     String endDateStr = scanner.next();
 
-    // Next token must be "to"
     nextTok = scanner.next();
     if (!nextTok.equalsIgnoreCase("to")) {
       throw new Exception("Missing 'to' token in copy events between command.");
     }
 
-    // Next token must be "--target"
     nextTok = scanner.next();
     if (!nextTok.equalsIgnoreCase("--target")) {
       throw new Exception("Missing '--target' token in copy events between command.");
     }
 
-    // Next token: target calendar name
     String targetCal = scanner.next();
-
-    // Next token: target start date
     String targetDateStr = scanner.next();
 
     LocalDate sourceStart = LocalDate.parse(startDateStr, dateFormatter);
@@ -246,21 +230,17 @@ public class CommandParser {
     multiMgr.copyEventsBetween(sourceStart, sourceEnd, targetCal, targetStart);
   }
 
-
-  // --- The original event commands follow below ---
-  static void processCreateEvent(String eventCmd, ICalendarManager singleCal) throws Exception {
+  private static void processCreateEvent(String eventCmd, ICalendarManager singleCal) throws Exception {
     boolean declineFlag = false;
     if (eventCmd.toLowerCase().contains("--autodecline")) {
       declineFlag = true;
       eventCmd = eventCmd.replace("--autodecline", "").trim();
     }
-    // Ensure the command contains either " from " or " on "
     if (!eventCmd.contains(" from ") && !eventCmd.contains(" on ")) {
       throw new Exception("Invalid create event command format.");
     }
 
     if (eventCmd.contains(" from ")) {
-      // Timed event branch
       String[] partedFrom = eventCmd.split(" from ", 2);
       String rawLabel = partedFrom[0].replace("create event", "").trim();
       String remainStr = partedFrom[1];
@@ -277,7 +257,7 @@ public class CommandParser {
         LocalDateTime beginDateTime = LocalDateTime.parse(rawBegin, dateTimeFormatter);
         LocalDateTime finishDateTime = LocalDateTime.parse(rawFinish, dateTimeFormatter);
         List<CalendarEvent> repeatedEvents = RecurringEventGenerator.generateRecurringEvents(
-                rawLabel, beginDateTime, finishDateTime, recRule, false);
+            rawLabel, beginDateTime, finishDateTime, recRule, false);
         for (CalendarEvent occurrence : repeatedEvents) {
           singleCal.addEvent(occurrence, declineFlag);
         }
@@ -290,12 +270,10 @@ public class CommandParser {
         OutputHandler.getInstance().println("Event created: " + createdEvent);
       }
     } else if (eventCmd.contains(" on ")) {
-      // All-day event branch
       String[] partedOn = eventCmd.split(" on ", 2);
       String rawLabel = partedOn[0].replace("create event", "").trim();
       String leftover = partedOn[1].trim();
 
-      // For safety, if a time is appended (like "T25:00"), take only the date part.
       String dateString = leftover;
       if (dateString.contains("T")) {
         dateString = dateString.substring(0, dateString.indexOf("T")).trim();
@@ -312,7 +290,7 @@ public class CommandParser {
         LocalDateTime beginDateTime = dateVal.atStartOfDay();
         LocalDateTime finishDateTime = dateVal.plusDays(1).atStartOfDay();
         List<CalendarEvent> repeatedEvents = RecurringEventGenerator.generateRecurringEvents(
-                rawLabel, beginDateTime, finishDateTime, recRule, true);
+            rawLabel, beginDateTime, finishDateTime, recRule, true);
         for (CalendarEvent occurrence : repeatedEvents) {
           singleCal.addEvent(occurrence, declineFlag);
         }
@@ -330,12 +308,11 @@ public class CommandParser {
     }
   }
 
-
-  public static String getUpdateMessage(boolean updatedFlag) {
+  private static String getUpdateMessage(boolean updatedFlag) {
     return updatedFlag ? "Event updated successfully." : "Event not found or update failed.";
   }
 
-  static void processEditCommand(String cmdLine, ICalendarManager singleCal, boolean isMulti) throws Exception {
+  private static void processEditCommand(String cmdLine, ICalendarManager singleCal, boolean isMulti) throws Exception {
     String prefix = isMulti ? "edit events" : "edit event";
     String remainingStr = cmdLine.substring(prefix.length()).trim();
     if (remainingStr.contains(" with ")) {
@@ -386,7 +363,7 @@ public class CommandParser {
     }
   }
 
-  static void processPrintEventsOn(String cmdLine, ICalendarManager singleCal) throws Exception {
+  private static void processPrintEventsOn(String cmdLine, ICalendarManager singleCal) throws Exception {
     String[] partedOn = cmdLine.split(" on ", 2);
     if (partedOn.length < 2) {
       throw new Exception("Invalid command format for printing events.");
@@ -404,7 +381,7 @@ public class CommandParser {
     }
   }
 
-  static void processPrintEventsRange(String cmdLine, ICalendarManager singleCal) throws Exception {
+  private static void processPrintEventsRange(String cmdLine, ICalendarManager singleCal) throws Exception {
     String[] partedFrom = cmdLine.split(" from ", 2);
     if (partedFrom.length < 2) {
       throw new Exception("Invalid command format for printing events in range.");
@@ -429,7 +406,7 @@ public class CommandParser {
     }
   }
 
-  static void processExportCal(String cmdLine, ICalendarManager singleCal) throws Exception {
+  private static void processExportCal(String cmdLine, ICalendarManager singleCal) throws Exception {
     String[] segments = cmdLine.split(" ");
     if (segments.length < 3) {
       throw new Exception("Invalid export command format.");
@@ -438,7 +415,7 @@ public class CommandParser {
     singleCal.exportToCSV(fileName);
   }
 
-  static void processExportGoogleCSV(String cmdLine, ICalendarManager singleCal) throws Exception {
+  private static void processExportGoogleCSV(String cmdLine, ICalendarManager singleCal) throws Exception {
     String[] segments = cmdLine.split(" ");
     if (segments.length < 3) {
       throw new Exception("Invalid export googlecsv command format.");
@@ -447,7 +424,7 @@ public class CommandParser {
     singleCal.exportToGoogleCSV(fileName);
   }
 
-  static void processShowStatus(String cmdLine, ICalendarManager singleCal) throws Exception {
+  private static void processShowStatus(String cmdLine, ICalendarManager singleCal) throws Exception {
     String[] partedOn = cmdLine.split(" on ", 2);
     if (partedOn.length < 2) {
       throw new Exception("Invalid command format for show status.");

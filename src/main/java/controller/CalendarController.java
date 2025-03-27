@@ -10,13 +10,17 @@ import java.util.Scanner;
 
 /**
  * CalendarController implements ICalendarController.
- * It now uses a MultiCalendarManager to support multiple calendars.
+ * It uses a MultiCalendarManager to support multiple calendars.
  */
 public class CalendarController implements ICalendarController {
 
   private final MultiCalendarManager multiCal;
 
-  // The currently selected calendar.
+  /**
+   * Constructs a CalendarController with the specified calendar manager.
+   *
+   * @param multiCal The MultiCalendarManager to be used
+   */
   public CalendarController(MultiCalendarManager multiCal) {
     this.multiCal = multiCal;
   }
@@ -36,7 +40,6 @@ public class CalendarController implements ICalendarController {
         break;
       }
       try {
-        // Delegate command processing to CommandParser.
         CommandParser.processCommand(userCommand, multiCal);
       } catch (Exception e) {
         OutputHandler.getInstance().println("Error: " + e.getMessage());
@@ -47,6 +50,8 @@ public class CalendarController implements ICalendarController {
 
   /**
    * Headless mode: read commands from a file.
+   *
+   * @param fileName The name of the file containing commands
    */
   @Override
   public void runHeadlessMode(String fileName) {

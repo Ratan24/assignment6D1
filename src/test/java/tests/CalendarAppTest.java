@@ -25,7 +25,10 @@ import model.ICalendarManager;
 import model.MultiCalendarManager;
 
 /**
- * A collective test for Calendar App to check functionalities working together.
+ * Comprehensive test suite for the Calendar application that verifies the functionality
+ * of individual components and their integration. Tests cover event creation, editing,
+ * recurring events, conflict detection, command parsing, and controller operations in
+ * both interactive and headless modes.
  */
 public class CalendarAppTest {
 
@@ -59,7 +62,7 @@ public class CalendarAppTest {
   public void testRecurringEventUntil() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     String command = "create event Seminar from 2025-03-03T09:00 to 2025-03-03T10:30 repeats WF " +
-            "until 2025-03-10T00:00";
+        "until 2025-03-10T00:00";
     CommandParser.processCommand(command, manager);
     assertTrue(manager.getAllEvents().size() > 0);
   }
@@ -70,7 +73,7 @@ public class CalendarAppTest {
     String createCmd = "create event Meeting from 2025-03-01T10:00 to 2025-03-01T11:00";
     CommandParser.processCommand(createCmd, manager);
     String editCmd = "edit event description Meeting from 2025-03-01T10:00 to 2025-03-01T11:00 " +
-            "with Quarterly results";
+        "with Quarterly results";
     CommandParser.processCommand(editCmd, manager);
     assertEquals("Quarterly results", manager.getAllEvents().get(0).getDescription());
   }
@@ -79,9 +82,9 @@ public class CalendarAppTest {
   public void testEditEventsByStart() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     CommandParser.processCommand("create event Seminar from 2025-03-03T09:00 to " +
-            "2025-03-03T10:30", manager);
+        "2025-03-03T10:30", manager);
     CommandParser.processCommand("create event Seminar from 2025-03-04T09:00 to " +
-            "2025-03-04T10:30", manager);
+        "2025-03-04T10:30", manager);
     String editCmd = "edit events description Seminar from 2025-03-04T00:00 with UpdatedSeminar";
     CommandParser.processCommand(editCmd, manager);
     for (ICalendarEvent event : manager.getAllEvents()) {
@@ -181,23 +184,6 @@ public class CalendarAppTest {
     }
   }
 
-//  @Test
-//  public void testMainHeadlessMode() throws Exception {
-//    File temp = File.createTempFile("commands", ".txt");
-//    try (PrintWriter writer = new PrintWriter(temp)) {
-//      writer.println("create event Test on 2025-03-05");
-//      writer.println("exit");
-//    }
-//    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//    PrintStream oldOut = System.out;
-//    System.setOut(new PrintStream(baos));
-//    CalendarApp.main(new String[]{"--mode", "headless", temp.getAbsolutePath()});
-//    System.setOut(oldOut);
-//    String output = baos.toString();
-//    assertTrue(output.contains("All-day event created:"));
-//    temp.delete();
-//  }
-
   @Test
   public void testExportCalCommand() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
@@ -242,13 +228,13 @@ public class CalendarAppTest {
   public void testPrintEventsRange() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     CommandParser.processCommand("create event Meeting from 2025-03-01T10:00 to " +
-            "2025-03-01T11:00", manager);
+        "2025-03-01T11:00", manager);
     CommandParser.processCommand("create event Workshop on 2025-03-02", manager);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream oldOut = System.out;
     System.setOut(new PrintStream(baos));
     CommandParser.processCommand("print events from 2025-03-01T00:00 to " +
-            "2025-03-03T00:00", manager);
+        "2025-03-03T00:00", manager);
     System.setOut(oldOut);
     String output = baos.toString();
     assertTrue(output.contains("Meeting"));
@@ -264,7 +250,7 @@ public class CalendarAppTest {
     System.setOut(oldOut);
     String output = baos.toString();
     assertTrue("Should print usage instructions",
-            output.contains("Usage: --mode interactive OR --mode headless <commandFile.txt>"));
+        output.contains("Usage: --mode interactive OR --mode headless <commandFile.txt>"));
   }
 
   @Test
@@ -276,28 +262,8 @@ public class CalendarAppTest {
     System.setOut(oldOut);
     String output = baos.toString();
     assertTrue("Should indicate invalid mode",
-            output.contains("Invalid mode. Use interactive or headless."));
+        output.contains("Invalid mode. Use interactive or headless."));
   }
-
-//  @Test
-//  public void testMainHeadlessModeUsingBaos() throws Exception {
-//    File temp = File.createTempFile("commands", ".txt");
-//    try (PrintWriter writer = new PrintWriter(temp)) {
-//      writer.println("create event Test on 2025-03-05");
-//      writer.println("exit");
-//    }
-//    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//    PrintStream oldOut = System.out;
-//    System.setOut(new PrintStream(baos));
-//
-//    CalendarApp.main(new String[]{"--mode", "headless", temp.getAbsolutePath()});
-//
-//    System.setOut(oldOut);
-//    String output = baos.toString();
-//    assertTrue("Headless mode should create an all-day event",
-//            output.contains("All-day event created:"));
-//    temp.delete();
-//  }
 
   @Test
   public void testConflictsWithOverlapping() {
@@ -324,9 +290,9 @@ public class CalendarAppTest {
     CalendarEvent event2 = new CalendarEvent("Event2", start2, end2, false);
 
     assertFalse("Events that do not overlap should not conflict"
-            , event1.conflictsWith(event2));
+        , event1.conflictsWith(event2));
     assertFalse("Events that do not overlap should not conflict"
-            , event2.conflictsWith(event1));
+        , event2.conflictsWith(event1));
   }
 
   @Test
@@ -352,7 +318,7 @@ public class CalendarAppTest {
     event.setLocation("Beach");
     event.setPublic(false);
     String expected = "Holiday (All Day on 2025-03-01)" +
-            ", Description: Vacation, Location: Beach, Private";
+        ", Description: Vacation, Location: Beach, Private";
     assertEquals(expected, event.toString());
   }
 
@@ -369,32 +335,27 @@ public class CalendarAppTest {
   public void testAddEventWithConflictAutoDecline() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     CalendarEvent event1 = new CalendarEvent("Meeting",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(event1, true);
     CalendarEvent event2 = new CalendarEvent("Meeting2",
-            LocalDateTime.of(2025, 3, 1, 10, 30),
-            LocalDateTime.of(2025, 3, 1, 11, 30)
-            , false);
+        LocalDateTime.of(2025, 3, 1, 10, 30),
+        LocalDateTime.of(2025, 3, 1, 11, 30)
+        , false);
     manager.addEvent(event2, true);
   }
-
-
 
   @Test(expected = Exception.class)
   public void testAddEventWithConflictAutoDecline1() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-    // Add first event (conflict checking passes because calendar is initially empty)
     CalendarEvent event1 = new CalendarEvent("Meeting",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(event1, true);
 
-    // Add second event that conflicts with the first.
-    // With the new requirements, conflicts are declined by default so this call should throw an Exception.
     CalendarEvent event2 = new CalendarEvent("Meeting2",
-            LocalDateTime.of(2025, 3, 1, 10, 30),
-            LocalDateTime.of(2025, 3, 1, 11, 30), false);
+        LocalDateTime.of(2025, 3, 1, 10, 30),
+        LocalDateTime.of(2025, 3, 1, 11, 30), false);
     manager.addEvent(event2, true);
   }
 
@@ -403,20 +364,20 @@ public class CalendarAppTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
     CalendarEvent event1 = new CalendarEvent(
-            "Event1",
-            LocalDateTime.of(2025, 3, 1, 12, 0),
-            LocalDateTime.of(2025, 3, 1, 13, 0),
-            false);
+        "Event1",
+        LocalDateTime.of(2025, 3, 1, 12, 0),
+        LocalDateTime.of(2025, 3, 1, 13, 0),
+        false);
     CalendarEvent event2 = new CalendarEvent(
-            "Event2",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0),
-            false);
+        "Event2",
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0),
+        false);
     CalendarEvent event3 = new CalendarEvent(
-            "Event3",
-            LocalDateTime.of(2025, 3, 1, 14, 0),
-            LocalDateTime.of(2025, 3, 1, 15, 0),
-            false);
+        "Event3",
+        LocalDateTime.of(2025, 3, 1, 14, 0),
+        LocalDateTime.of(2025, 3, 1, 15, 0),
+        false);
 
     manager.addEvent(event1, false);
     manager.addEvent(event2, false);
@@ -424,97 +385,26 @@ public class CalendarAppTest {
 
     List<ICalendarEvent> sorted = manager.getAllEvents();
     assertEquals("First event should be Event2", "Event2"
-            , sorted.get(0).getEventName());
+        , sorted.get(0).getEventName());
     assertEquals("Second event should be Event1", "Event1"
-            , sorted.get(1).getEventName());
+        , sorted.get(1).getEventName());
     assertEquals("Third event should be Event3", "Event3"
-            , sorted.get(2).getEventName());
+        , sorted.get(2).getEventName());
   }
 
   @Test(expected = Exception.class)
   public void testConflictAutoDecline() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     CalendarEvent e1 = new CalendarEvent("Meeting",
-            LocalDateTime.of(2025, 3, 1, 10, 0),
-            LocalDateTime.of(2025, 3, 1, 11, 0), false);
+        LocalDateTime.of(2025, 3, 1, 10, 0),
+        LocalDateTime.of(2025, 3, 1, 11, 0), false);
     manager.addEvent(e1, true);
     CalendarEvent e2 = new CalendarEvent("Meeting2",
-            LocalDateTime.of(2025, 3, 1, 10, 30),
-            LocalDateTime.of(2025, 3, 1, 11, 30)
-            , false);
+        LocalDateTime.of(2025, 3, 1, 10, 30),
+        LocalDateTime.of(2025, 3, 1, 11, 30)
+        , false);
     manager.addEvent(e2, true);
   }
-
-//  @Test
-//  public void testMainInteractiveModeMvcDesign() throws Exception {
-//    String simulatedInput = "exit\n";
-//    ByteArrayInputStream bais = new ByteArrayInputStream(simulatedInput.getBytes());
-//    InputStream oldIn = System.in;
-//    System.setIn(bais);
-//
-//    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//    PrintStream oldOut = System.out;
-//    System.setOut(new PrintStream(baos));
-//
-//    CalendarController controller = new CalendarController(new CalendarManager());
-//    controller.runInteractiveMode();
-//
-//    System.setOut(oldOut);
-//    System.setIn(oldIn);
-//    String output = baos.toString();
-//    assertTrue(output.contains("Exiting."));
-//  }
-
-//  @Test
-//  public void testInteractiveModeOutputAndCommandProcessing() throws Exception {
-//    String simulatedInput = "create event Meeting from 2025-03-01T10:00 " +
-//            "to 2025-03-01T11:00\nexit\n";
-//    InputStream originalIn = System.in;
-//    System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
-//
-//    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//    PrintStream originalOut = System.out;
-//    System.setOut(new PrintStream(baos));
-//
-//    ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-//    CalendarController controller = new CalendarController(manager);
-//    controller.runInteractiveMode();
-//
-//    System.setIn(originalIn);
-//    System.setOut(originalOut);
-//
-//    String output = baos.toString();
-//    assertTrue("Should print welcome message"
-//            , output.contains("Calendar App Interactive Mode. Type 'exit' to quit."));
-//    assertTrue("Should print prompt", output.contains("> "));
-//    assertTrue("Should print exiting message", output.contains("Exiting."));
-//    assertEquals("One event should be created", 1, manager.getAllEvents().size());
-//  }
-
-//  @Test
-//  public void testHeadlessModeOutput() throws Exception {
-//    File temp = File.createTempFile("commands", ".txt");
-//    try (PrintWriter writer = new PrintWriter(temp)) {
-//      writer.println("create event HeadlessTest on 2025-03-05");
-//      writer.println("exit");
-//    }
-//
-//    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//    PrintStream originalOut = System.out;
-//    System.setOut(new PrintStream(baos));
-//
-//    ICalendarManager manager = new CalendarManager();
-//    CalendarController controller = new CalendarController(manager);
-//    controller.runHeadlessMode(temp.getAbsolutePath());
-//    System.setOut(originalOut);
-//    String output = baos.toString();
-//
-//    assertTrue("Headless mode should print a prompt", output.contains("> "));
-//    assertTrue("Headless mode should print 'Exiting.'", output.contains("Exiting."));
-//    assertEquals("One event should be created", 1, manager.getAllEvents().size());
-//
-//    temp.delete();
-//  }
 
   private String captureOutput(Runnable runnable) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -530,7 +420,6 @@ public class CalendarAppTest {
 
   @Test
   public void testRunInteractiveMode_exitImmediately() {
-    // Simulate interactive mode: the only command is "exit"
     String simulatedInput = "exit\n";
     InputStream originalIn = System.in;
     System.setIn(new ByteArrayInputStream(simulatedInput.getBytes()));
@@ -542,7 +431,6 @@ public class CalendarAppTest {
 
     System.setIn(originalIn);
 
-    // Check that the initial prompt, the "exit" command and final "Exiting." message are printed
     assertTrue(output.contains("Calendar App Interactive Mode. Type 'exit' to quit."));
     assertTrue(output.contains("> "));
     assertTrue(output.contains("Exiting."));
@@ -550,7 +438,6 @@ public class CalendarAppTest {
 
   @Test
   public void testRunHeadlessMode_validFile() throws Exception {
-    // Create a temporary file with a valid command file.
     File tempFile = File.createTempFile("commands", ".txt");
     try (PrintWriter writer = new PrintWriter(tempFile)) {
       writer.println("create calendar --name TestCal --timezone America/New_York");
@@ -563,7 +450,6 @@ public class CalendarAppTest {
     String output = captureOutput(() -> controller.runHeadlessMode(tempFile.getAbsolutePath()));
     tempFile.delete();
 
-    // Check that the file commands are printed and that a calendar creation message appears.
     assertTrue(output.contains("> create calendar --name TestCal --timezone America/New_York"));
     assertTrue(output.contains("Calendar created: TestCal (America/New_York)"));
     assertTrue(output.contains("Exiting."));
@@ -574,24 +460,6 @@ public class CalendarAppTest {
     MultiCalendarManager multiCal = new MultiCalendarManager();
     CalendarController controller = new CalendarController(multiCal);
     String output = captureOutput(() -> controller.runHeadlessMode("nonexistent_file.txt"));
-    // Check that an error reading the file is reported.
     assertTrue(output.contains("Error reading file:"));
   }
-
-//  @Test
-//  public void testRunHeadlessMode_invalidCommand() throws Exception {
-//    // Create a temporary file with an invalid command.
-//    File tempFile = File.createTempFile("invalidCommands", ".txt");
-//    try (PrintWriter writer = new PrintWriter(tempFile)) {
-//      writer.println("invalid command");
-//      writer.println("exit");
-//    }
-//    MultiCalendarManager multiCal = new MultiCalendarManager();
-//    CalendarController controller = new CalendarController(multiCal);
-//    String output = captureOutput(() -> controller.runHeadlessMode(tempFile.getAbsolutePath()));
-//    tempFile.delete();
-//
-//    // Expect the output to contain a command error message.
-//    assertTrue(output.contains("Command error: Invalid command: invalid command"));
-//  }
 }
