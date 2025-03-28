@@ -1,14 +1,20 @@
 package tests;
 
-import static org.junit.Assert.*;
-import org.junit.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
+import org.junit.Before;
+import org.junit.Test;
+
 import model.MultiCalendarManager;
 import controller.CommandParser;
 
 /**
- * Tests the calendar creation functionality in CommandParser, verifying
- * correct parsing of command parameters and appropriate error handling
- * for various invalid input scenarios.
+ * Tests the calendar creation functionality in CommandParser, verifying correct parsing of command
+ * parameters and appropriate error handling for various invalid input scenarios.
  */
 public class CommandParserCreateCalendarTest {
 

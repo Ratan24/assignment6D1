@@ -30,6 +30,7 @@ interactive or java calendar.CalendarApp --mode headless <commandsFile.txt>
 4. Headless Mode
    In headless mode, you provide a text file with commands, one per line.
    The application processes them and stops at exit or end-of-file.
+5. To Run JAR file: "java -jar Calendar.jar --mode interactive" or "java -jar Calendar.jar --mode headless <commandFile.txt>"
 
 ## Features That Work:
    Create events (timed or all-day)
@@ -45,5 +46,16 @@ interactive or java calendar.CalendarApp --mode headless <commandsFile.txt>
 
 
 ## A rough distribution of each team member.
+## Work Distribution
+
+- **Multi-Calendar Framework**: Implementation of multiple calendar management and selection
+- **Timezone Integration**: Adding timezone support to calendars and events
+- **Event Operations**: Cross-calendar copying and conflict resolution
+- **Command Processing**: Parser enhancements for new functionalities
+- **Project Infrastructure**: Testing, documentation, and delivery
+
+Member A focused primarily on the multi-calendar framework and cross-calendar event operations, 
+while Member B concentrated on timezone integration and command processing enhancements. 
+Both members collaborated on testing and documentation.
 
 

@@ -8,12 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Generates recurring calendar events based on specified patterns.
- * Supports "for N times" and "until date" recurrence patterns.
+ * Generates recurring calendar events based on specified patterns. Supports "for N times" and
+ * "until date" recurrence patterns.
  */
 public class RecurringEventGenerator implements IRecurringEventGenerator {
+
   private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-  private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+  private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
+      "yyyy-MM-dd'T'HH:mm");
 
   /**
    * Converts a day of the week to a single character code.
@@ -24,13 +26,20 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
    */
   public static char dayToChar(DayOfWeek day) {
     switch (day) {
-      case MONDAY:    return 'M';
-      case TUESDAY:   return 'T';
-      case WEDNESDAY: return 'W';
-      case THURSDAY:  return 'R';
-      case FRIDAY:    return 'F';
-      case SATURDAY:  return 'S';
-      case SUNDAY:    return 'U';
+      case MONDAY:
+        return 'M';
+      case TUESDAY:
+        return 'T';
+      case WEDNESDAY:
+        return 'W';
+      case THURSDAY:
+        return 'R';
+      case FRIDAY:
+        return 'F';
+      case SATURDAY:
+        return 'S';
+      case SUNDAY:
+        return 'U';
       default:
         throw new IllegalArgumentException("Unknown day: " + day);
     }
@@ -39,8 +48,9 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
   /**
    * Checks if a given day is included in a weekdays pattern string.
    *
-   * @param day The day to check
-   * @param weekdaysPattern A string containing day codes (e.g., "MWF" for Monday, Wednesday, Friday)
+   * @param day             The day to check
+   * @param weekdaysPattern A string containing day codes (e.g., "MWF" for Monday, Wednesday,
+   *                        Friday)
    * @return true if the day is included in the pattern, false otherwise
    */
   public static boolean isRecurringDay(DayOfWeek day, String weekdaysPattern) {
@@ -51,11 +61,12 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
   /**
    * Generates a list of recurring calendar events based on the specified pattern.
    *
-   * @param eventName The name of the events
+   * @param eventName     The name of the events
    * @param startDateTime The start date and time of the first event
-   * @param endDateTime The end date and time of the first event
-   * @param repeatPart The recurrence pattern (e.g., "MWF for 10 times" or "TR until 2023-12-31")
-   * @param isAllDay Whether these are all-day events
+   * @param endDateTime   The end date and time of the first event
+   * @param repeatPart    The recurrence pattern (e.g., "MWF for 10 times" or "TR until
+   *                      2023-12-31")
+   * @param isAllDay      Whether these are all-day events
    * @return A list of generated calendar events
    * @throws Exception If the recurrence pattern is invalid
    */
@@ -85,7 +96,8 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
       LocalDateTime currentDay = startDateTime;
       while (generatedEvents.size() < occurrencesCount) {
         if (isRecurringDay(currentDay.getDayOfWeek(), weekdayString)) {
-          addOccurrence(generatedEvents, eventName, currentDay, startDateTime, endDateTime, isAllDay);
+          addOccurrence(generatedEvents, eventName, currentDay, startDateTime, endDateTime,
+              isAllDay);
         }
         currentDay = currentDay.plusDays(1);
       }
@@ -105,7 +117,8 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
       LocalDateTime currentDay = startDateTime;
       while (!currentDay.isAfter(boundaryDateTime.minusSeconds(1))) {
         if (isRecurringDay(currentDay.getDayOfWeek(), weekdayString)) {
-          addOccurrence(generatedEvents, eventName, currentDay, startDateTime, endDateTime, isAllDay);
+          addOccurrence(generatedEvents, eventName, currentDay, startDateTime, endDateTime,
+              isAllDay);
         }
         currentDay = currentDay.plusDays(1);
       }
@@ -118,12 +131,12 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
   /**
    * Adds an occurrence of an event to the event list.
    *
-   * @param eventList The list to add the event to
-   * @param eventName The name of the event
-   * @param current The current date/time being considered
+   * @param eventList     The list to add the event to
+   * @param eventName     The name of the event
+   * @param current       The current date/time being considered
    * @param originalStart The original start time
-   * @param originalEnd The original end time
-   * @param allDay Whether this is an all-day event
+   * @param originalEnd   The original end time
+   * @param allDay        Whether this is an all-day event
    */
   private static void addOccurrence(List<CalendarEvent> eventList, String eventName,
       LocalDateTime current, LocalDateTime originalStart,
@@ -137,11 +150,12 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
   /**
    * Interface-compatible version of generateRecurringEvents that returns ICalendarEvent objects.
    *
-   * @param eventName The name of the events
+   * @param eventName     The name of the events
    * @param startDateTime The start date and time of the first event
-   * @param endDateTime The end date and time of the first event
-   * @param repeatPart The recurrence pattern (e.g., "MWF for 10 times" or "TR until 2023-12-31")
-   * @param isAllDay Whether these are all-day events
+   * @param endDateTime   The end date and time of the first event
+   * @param repeatPart    The recurrence pattern (e.g., "MWF for 10 times" or "TR until
+   *                      2023-12-31")
+   * @param isAllDay      Whether these are all-day events
    * @return A list of generated calendar events as ICalendarEvent objects
    * @throws Exception If the recurrence pattern is invalid
    */
@@ -153,7 +167,8 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
       String repeatPart,
       boolean isAllDay) throws Exception {
 
-    List<CalendarEvent> resultFromStatic = generateRecurringEvents(eventName, startDateTime, endDateTime, repeatPart, isAllDay);
+    List<CalendarEvent> resultFromStatic = generateRecurringEvents(eventName, startDateTime,
+        endDateTime, repeatPart, isAllDay);
     List<ICalendarEvent> interfaceList = new ArrayList<>();
     for (CalendarEvent oneEvent : resultFromStatic) {
       interfaceList.add(oneEvent);

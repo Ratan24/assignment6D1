@@ -22,8 +22,9 @@ import model.ICalendarManager;
 
 /**
  * Comprehensive test suite for the CalendarManager class that verifies its core functionality.
- * Tests cover event management (adding, editing, conflict detection), querying (by date, time range, busy status),
- * export capabilities (standard CSV and Google CSV), and boundary condition handling.
+ * Tests cover event management (adding, editing, conflict detection), querying (by date, time
+ * range, busy status), export capabilities (standard CSV and Google CSV), and boundary condition
+ * handling.
  */
 public class CalendarManagerTest {
 
@@ -309,12 +310,10 @@ public class CalendarManagerTest {
       fail("Unexpected exception while adding event: " + ex.getMessage());
     }
 
-
     boolean updated = manager.editSingleEvent("description", "TestEvent"
         , e1.getStart(), e1.getEnd(), "NewDesc");
     assertTrue(updated);
     assertEquals("NewDesc", e1.getDescription());
-
 
     boolean result = manager.editSingleEvent("unknown", "TestEvent"
         , e1.getStart(), e1.getEnd(), "X");
@@ -421,7 +420,6 @@ public class CalendarManagerTest {
   public void testExportToCSV_Error() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
 
-
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream originalOut = System.out;
     System.setOut(new PrintStream(baos));
@@ -436,7 +434,6 @@ public class CalendarManagerTest {
   @Test
   public void testEditEventName() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-
 
     ICalendarEvent event = new CalendarEvent("OriginalName",
         LocalDateTime.of(2025, 3, 1, 10, 0),
@@ -496,7 +493,9 @@ public class CalendarManagerTest {
         LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
-    } catch(Exception e) { fail(e.getMessage()); }
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     assertTrue(manager.getEventsInRange(
         LocalDateTime.of(2025, 3, 1, 10, 0),
@@ -513,7 +512,9 @@ public class CalendarManagerTest {
         LocalDateTime.of(2025, 3, 1, 10, 0), false);
     try {
       manager.addEvent(event, false);
-    } catch(Exception e) { fail(e.getMessage()); }
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
     assertTrue(manager.isBusyAt(LocalDateTime.of(2025
         , 3, 1, 9, 0)));
     assertFalse(manager.isBusyAt(LocalDateTime.of(2025, 3
@@ -559,7 +560,9 @@ public class CalendarManagerTest {
         LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
-    } catch(Exception e) { fail(e.getMessage()); }
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     boolean updated = manager.editSingleEvent("name", "TestEvent",
         event.getStart(), event.getEnd(), "NewName");
@@ -615,18 +618,15 @@ public class CalendarManagerTest {
     assertTrue("Event name should be updated", updated);
     assertEquals("NewName", manager.getAllEvents().get(0).getEventName());
 
-
     updated = manager.editSingleEvent("description", "NewName"
         , event.getStart(), event.getEnd(), "NewDescription");
     assertTrue("Event description should be updated", updated);
     assertEquals("NewDescription", manager.getAllEvents().get(0).getDescription());
 
-
     updated = manager.editSingleEvent("location", "NewName"
         , event.getStart(), event.getEnd(), "NewLocation");
     assertTrue("Event location should be updated", updated);
     assertEquals("NewLocation", manager.getAllEvents().get(0).getLocation());
-
 
     updated = manager.editSingleEvent("public", "NewName"
         , event.getStart(), event.getEnd(), "false");
@@ -648,7 +648,7 @@ public class CalendarManagerTest {
         LocalDateTime.of(2025, 3, 1, 11, 0), false);
     try {
       manager.addEvent(event, false);
-    } catch(Exception e){
+    } catch (Exception e) {
       fail("Unexpected exception: " + e.getMessage());
     }
 
@@ -666,7 +666,7 @@ public class CalendarManagerTest {
         LocalDateTime.of(2025, 3, 1, 10, 0), false);
     try {
       manager.addEvent(event, false);
-    } catch(Exception e){
+    } catch (Exception e) {
       fail(e.getMessage());
     }
     assertTrue("Should be busy at start time"

@@ -12,7 +12,7 @@ public interface ICalendarManager {
   /**
    * Adds a new event to the calendar.
    *
-   * @param newEvent The event to add
+   * @param newEvent    The event to add
    * @param autoDecline Whether to automatically decline conflicting events
    * @throws Exception If there is a conflict with an existing event
    */
@@ -30,7 +30,7 @@ public interface ICalendarManager {
    * Gets all events that occur within the specified time range.
    *
    * @param startRange The start of the time range
-   * @param endRange The end of the time range
+   * @param endRange   The end of the time range
    * @return A list of events within the specified range
    */
   List<ICalendarEvent> getEventsInRange(LocalDateTime startRange, LocalDateTime endRange);
@@ -60,11 +60,11 @@ public interface ICalendarManager {
   /**
    * Edits a single event that matches the specified criteria.
    *
-   * @param property The property to edit
+   * @param property  The property to edit
    * @param eventName The name of the event
-   * @param start The start time of the event
-   * @param end The end time of the event
-   * @param newValue The new value for the property
+   * @param start     The start time of the event
+   * @param end       The end time of the event
+   * @param newValue  The new value for the property
    * @return true if the event was found and updated, false otherwise
    */
   boolean editSingleEvent(String property, String eventName,
@@ -73,10 +73,10 @@ public interface ICalendarManager {
   /**
    * Edits all events with the specified name that start at or after the specified time.
    *
-   * @param property The property to edit
+   * @param property  The property to edit
    * @param eventName The name of the events to edit
-   * @param start The start time to filter events
-   * @param newValue The new value for the property
+   * @param start     The start time to filter events
+   * @param newValue  The new value for the property
    * @return The number of events that were updated
    */
   int editEventsByStart(String property, String eventName, LocalDateTime start, String newValue);
@@ -84,9 +84,9 @@ public interface ICalendarManager {
   /**
    * Edits all events with the specified name.
    *
-   * @param property The property to edit
+   * @param property  The property to edit
    * @param eventName The name of the events to edit
-   * @param newValue The new value for the property
+   * @param newValue  The new value for the property
    * @return The number of events that were updated
    */
   int editEventsByName(String property, String eventName, String newValue);

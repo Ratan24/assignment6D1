@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
  * A concrete implementation of ICalendarEvent, representing a single event.
  */
 public class CalendarEvent implements ICalendarEvent {
+
   private String internalName;
   private LocalDateTime internalStart;
   private LocalDateTime internalEnd;
@@ -19,9 +20,9 @@ public class CalendarEvent implements ICalendarEvent {
    * Constructs a new calendar event with the specified parameters.
    *
    * @param eventName The name of the event
-   * @param start The start date and time
-   * @param end The end date and time
-   * @param isAllDay Whether this is an all-day event
+   * @param start     The start date and time
+   * @param end       The end date and time
+   * @param isAllDay  Whether this is an all-day event
    */
   public CalendarEvent(String eventName, LocalDateTime start, LocalDateTime end, boolean isAllDay) {
     this.internalName = eventName;

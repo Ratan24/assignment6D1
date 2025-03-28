@@ -30,7 +30,6 @@ public class CalendarEventTest {
     assertEquals("", event.getLocation());
     assertTrue("Default should be public", event.isPublic());
 
-
     event.setEventName("Updated");
     LocalDateTime newStart = start.plusHours(1);
     LocalDateTime newEnd = end.plusHours(1);
@@ -53,9 +52,9 @@ public class CalendarEventTest {
   @Test
   public void testConflictsWith_Overlapping() {
     LocalDateTime start1 = LocalDateTime.of(2025, 3, 1, 10, 0);
-    LocalDateTime end1   = LocalDateTime.of(2025, 3, 1, 11, 0);
+    LocalDateTime end1 = LocalDateTime.of(2025, 3, 1, 11, 0);
     LocalDateTime start2 = LocalDateTime.of(2025, 3, 1, 10, 30);
-    LocalDateTime end2   = LocalDateTime.of(2025, 3, 1, 11, 30);
+    LocalDateTime end2 = LocalDateTime.of(2025, 3, 1, 11, 30);
     ICalendarEvent event1 = new CalendarEvent("Event1", start1, end1, false);
     ICalendarEvent event2 = new CalendarEvent("Event2", start2, end2, false);
     assertTrue("Overlapping events should conflict", event1.conflictsWith(event2));
@@ -65,9 +64,9 @@ public class CalendarEventTest {
   @Test
   public void testConflictsWith_NonOverlapping() {
     LocalDateTime start1 = LocalDateTime.of(2025, 3, 1, 10, 0);
-    LocalDateTime end1   = LocalDateTime.of(2025, 3, 1, 11, 0);
+    LocalDateTime end1 = LocalDateTime.of(2025, 3, 1, 11, 0);
     LocalDateTime start2 = LocalDateTime.of(2025, 3, 1, 11, 0);
-    LocalDateTime end2   = LocalDateTime.of(2025, 3, 1, 12, 0);
+    LocalDateTime end2 = LocalDateTime.of(2025, 3, 1, 12, 0);
     ICalendarEvent event1 = new CalendarEvent("Event1", start1, end1, false);
     ICalendarEvent event2 = new CalendarEvent("Event2", start2, end2, false);
     assertFalse("Non-overlapping events should not conflict", event1.conflictsWith(event2));
@@ -77,7 +76,7 @@ public class CalendarEventTest {
   @Test
   public void testToString_TimedEventWithoutExtras() {
     LocalDateTime start = LocalDateTime.of(2025, 3, 1, 10, 0);
-    LocalDateTime end   = LocalDateTime.of(2025, 3, 1, 11, 0);
+    LocalDateTime end = LocalDateTime.of(2025, 3, 1, 11, 0);
     ICalendarEvent event = new CalendarEvent("Meeting", start, end, false);
     String expected = "Meeting from 2025-03-01 10:00 to 2025-03-01 11:00, Public";
     assertEquals(expected, event.toString());
@@ -86,13 +85,13 @@ public class CalendarEventTest {
   @Test
   public void testToString_AllDayWithDescriptionAndLocation() {
     LocalDateTime start = LocalDate.of(2025, 3, 1).atStartOfDay();
-    LocalDateTime end   = start.plusDays(1);
+    LocalDateTime end = start.plusDays(1);
     ICalendarEvent event = new CalendarEvent("Holiday", start, end, true);
     event.setDescription("Vacation");
     event.setLocation("Beach");
     event.setPublic(false);
     String expected = "Holiday (All Day on 2025-03-01)" +
-            ", Description: Vacation, Location: Beach, Private";
+        ", Description: Vacation, Location: Beach, Private";
     assertEquals(expected, event.toString());
   }
 }

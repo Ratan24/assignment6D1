@@ -1,25 +1,26 @@
 package tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.File;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
-import model.*;
 import controller.CommandParser;
-import view.OutputHandler;
+import model.ICalendarEvent;
+import model.MultiCalendarManager;
 
 /**
- * Integration tests for CommandParser with MultiCalendarManager.
- * Tests various command types including calendar management, event management,
- * copying functionality, and export operations to verify that commands are
- * properly parsed and executed.
+ * Integration tests for CommandParser with MultiCalendarManager. Tests various command types
+ * including calendar management, event management, copying functionality, and export operations to
+ * verify that commands are properly parsed and executed.
  */
 public class CommandParserMultiTest {
 
@@ -79,7 +80,8 @@ public class CommandParserMultiTest {
     String eventCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
     CommandParser.processCommand(eventCommand, multiCal.getCurrentCalendar());
     outContent.reset();
-    String copyCommand = "copy event Meeting on 2025-03-27T09:00 --target Personal to 2025-03-27T11:00";
+    String copyCommand = "copy event Meeting on 2025-03-27T09:00 --target Personal "
+        + "to 2025-03-27T11:00";
     CommandParser.processCommand(copyCommand, multiCal);
     String output = outContent.toString();
     assertTrue(output.contains("Event copied to calendar Personal:"));
@@ -99,7 +101,8 @@ public class CommandParserMultiTest {
     String copyCommand = "copy events on 2025-03-27 --target Personal to 2025-03-28";
     CommandParser.processCommand(copyCommand, multiCal);
     String output = outContent.toString();
-    assertTrue(output.contains("Copied 1 event(s) from 2025-03-27 to Personal starting on 2025-03-28"));
+    assertTrue(
+        output.contains("Copied 1 event(s) from 2025-03-27 to Personal starting on 2025-03-28"));
     multiCal.useCalendar("Personal");
     List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
     assertFalse(events.isEmpty());
@@ -115,7 +118,8 @@ public class CommandParserMultiTest {
     CommandParser.processCommand(event1, multiCal.getCurrentCalendar());
     CommandParser.processCommand(event2, multiCal.getCurrentCalendar());
     outContent.reset();
-    String copyCommand = "copy events between 2025-03-27 and 2025-03-28 to --target Personal 2025-03-29";
+    String copyCommand = "copy events between 2025-03-27 and 2025-03-28 to --target Personal "
+        + "2025-03-29";
     CommandParser.processCommand(copyCommand, multiCal);
     String output = outContent.toString();
     assertTrue(output.contains("Copied 2 event(s)"));
@@ -155,7 +159,8 @@ public class CommandParserMultiTest {
   public void testProcessCreateEvent_RepeatingTimed_Valid() throws Exception {
     multiCal.createCalendar("Work", "America/New_York");
     outContent.reset();
-    String command = "create event Workshop from 2025-03-27T09:00 to 2025-03-27T10:00 repeats M for 3 times";
+    String command = "create event Workshop from 2025-03-27T09:00 to 2025-03-27T10:00 "
+        + "repeats M for 3 times";
     CommandParser.processCommand(command, multiCal.getCurrentCalendar());
     String output = outContent.toString();
     assertTrue(output.contains("Recurring event created with 3 occurrences."));
@@ -181,7 +186,8 @@ public class CommandParserMultiTest {
     String createCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
     CommandParser.processCommand(createCommand, multiCal.getCurrentCalendar());
     outContent.reset();
-    String editCommand = "edit event subject Meeting from 2025-03-27T09:00 to 2025-03-27T10:00 with UpdatedMeeting";
+    String editCommand = "edit event subject Meeting from 2025-03-27T09:00 to 2025-03-27T10:00 "
+        + "with UpdatedMeeting";
     CommandParser.processCommand(editCommand, multiCal.getCurrentCalendar());
     String output = outContent.toString();
     assertTrue(output.contains("Event updated successfully."));
@@ -279,7 +285,8 @@ public class CommandParserMultiTest {
 
   @Test(expected = Exception.class)
   public void testProcessCommand_InvalidManager() throws Exception {
-    CommandParser.processCommand("create event Test from 2025-03-27T09:00 to 2025-03-27T10:00", new Object());
+    CommandParser.processCommand("create event Test from 2025-03-27T09:00 to 2025-03-27T10:00",
+        new Object());
   }
 
   @Test(expected = Exception.class)

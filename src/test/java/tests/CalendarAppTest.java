@@ -25,10 +25,10 @@ import model.ICalendarManager;
 import model.MultiCalendarManager;
 
 /**
- * Comprehensive test suite for the Calendar application that verifies the functionality
- * of individual components and their integration. Tests cover event creation, editing,
- * recurring events, conflict detection, command parsing, and controller operations in
- * both interactive and headless modes.
+ * Comprehensive test suite for the Calendar application that verifies the functionality of
+ * individual components and their integration. Tests cover event creation, editing, recurring
+ * events, conflict detection, command parsing, and controller operations in both interactive and
+ * headless modes.
  */
 public class CalendarAppTest {
 
@@ -61,8 +61,8 @@ public class CalendarAppTest {
   @Test
   public void testRecurringEventUntil() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-    String command = "create event Seminar from 2025-03-03T09:00 to 2025-03-03T10:30 repeats WF " +
-        "until 2025-03-10T00:00";
+    String command = "create event Seminar from 2025-03-03T09:00 to 2025-03-03T10:30 repeats WF "
+        + "until 2025-03-10T00:00";
     CommandParser.processCommand(command, manager);
     assertTrue(manager.getAllEvents().size() > 0);
   }
@@ -72,8 +72,8 @@ public class CalendarAppTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     String createCmd = "create event Meeting from 2025-03-01T10:00 to 2025-03-01T11:00";
     CommandParser.processCommand(createCmd, manager);
-    String editCmd = "edit event description Meeting from 2025-03-01T10:00 to 2025-03-01T11:00 " +
-        "with Quarterly results";
+    String editCmd = "edit event description Meeting from 2025-03-01T10:00 to 2025-03-01T11:00 "
+        + "with Quarterly results";
     CommandParser.processCommand(editCmd, manager);
     assertEquals("Quarterly results", manager.getAllEvents().get(0).getDescription());
   }
@@ -81,10 +81,10 @@ public class CalendarAppTest {
   @Test
   public void testEditEventsByStart() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-    CommandParser.processCommand("create event Seminar from 2025-03-03T09:00 to " +
-        "2025-03-03T10:30", manager);
-    CommandParser.processCommand("create event Seminar from 2025-03-04T09:00 to " +
-        "2025-03-04T10:30", manager);
+    CommandParser.processCommand("create event Seminar from 2025-03-03T09:00 to "
+        + "2025-03-03T10:30", manager);
+    CommandParser.processCommand("create event Seminar from 2025-03-04T09:00 to "
+        + "2025-03-04T10:30", manager);
     String editCmd = "edit events description Seminar from 2025-03-04T00:00 with UpdatedSeminar";
     CommandParser.processCommand(editCmd, manager);
     for (ICalendarEvent event : manager.getAllEvents()) {
@@ -227,14 +227,14 @@ public class CalendarAppTest {
   @Test
   public void testPrintEventsRange() throws Exception {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
-    CommandParser.processCommand("create event Meeting from 2025-03-01T10:00 to " +
-        "2025-03-01T11:00", manager);
+    CommandParser.processCommand("create event Meeting from 2025-03-01T10:00 to "
+        + "2025-03-01T11:00", manager);
     CommandParser.processCommand("create event Workshop on 2025-03-02", manager);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream oldOut = System.out;
     System.setOut(new PrintStream(baos));
-    CommandParser.processCommand("print events from 2025-03-01T00:00 to " +
-        "2025-03-03T00:00", manager);
+    CommandParser.processCommand("print events from 2025-03-01T00:00 to "
+        + "2025-03-03T00:00", manager);
     System.setOut(oldOut);
     String output = baos.toString();
     assertTrue(output.contains("Meeting"));
@@ -289,10 +289,10 @@ public class CalendarAppTest {
     CalendarEvent event1 = new CalendarEvent("Event1", start1, end1, false);
     CalendarEvent event2 = new CalendarEvent("Event2", start2, end2, false);
 
-    assertFalse("Events that do not overlap should not conflict"
-        , event1.conflictsWith(event2));
-    assertFalse("Events that do not overlap should not conflict"
-        , event2.conflictsWith(event1));
+    assertFalse("Events that do not overlap should not conflict",
+        event1.conflictsWith(event2));
+    assertFalse("Events that do not overlap should not conflict",
+        event2.conflictsWith(event1));
   }
 
   @Test
@@ -317,8 +317,8 @@ public class CalendarAppTest {
     event.setDescription("Vacation");
     event.setLocation("Beach");
     event.setPublic(false);
-    String expected = "Holiday (All Day on 2025-03-01)" +
-        ", Description: Vacation, Location: Beach, Private";
+    String expected = "Holiday (All Day on 2025-03-01)"
+        + ", Description: Vacation, Location: Beach, Private";
     assertEquals(expected, event.toString());
   }
 
@@ -340,8 +340,8 @@ public class CalendarAppTest {
     manager.addEvent(event1, true);
     CalendarEvent event2 = new CalendarEvent("Meeting2",
         LocalDateTime.of(2025, 3, 1, 10, 30),
-        LocalDateTime.of(2025, 3, 1, 11, 30)
-        , false);
+        LocalDateTime.of(2025, 3, 1, 11, 30),
+        false);
     manager.addEvent(event2, true);
   }
 

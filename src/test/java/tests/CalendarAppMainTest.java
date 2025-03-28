@@ -2,7 +2,9 @@ package tests;
 
 import calendar.CalendarApp;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -12,8 +14,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
- * Tests the CalendarApp's main method functionality, including argument validation,
- * interactive mode, headless mode with various inputs, and error handling.
+ * Tests the CalendarApp's main method functionality, including argument validation, interactive
+ * mode, headless mode with various inputs, and error handling.
  */
 public class CalendarAppMainTest {
 

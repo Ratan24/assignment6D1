@@ -13,10 +13,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Represents a single calendar with a unique name, associated timezone,
- * and a list of events.
+ * Represents a single calendar with a unique name, associated timezone, and a list of events.
  */
 public class CalendarManager implements ICalendarManager {
+
   private final List<ICalendarEvent> events;
   private String calendarName;
   private ZoneId timeZone;
@@ -25,7 +25,7 @@ public class CalendarManager implements ICalendarManager {
    * Constructs a new calendar manager with the specified name and timezone.
    *
    * @param calendarName The name of the calendar
-   * @param timezoneStr The timezone string (e.g., "America/New_York")
+   * @param timezoneStr  The timezone string (e.g., "America/New_York")
    * @throws Exception If the timezone format is invalid
    */
   public CalendarManager(String calendarName, String timezoneStr) throws Exception {
@@ -55,7 +55,7 @@ public class CalendarManager implements ICalendarManager {
   /**
    * Adds a new event to the calendar.
    *
-   * @param newEvent The event to add
+   * @param newEvent    The event to add
    * @param autoDecline Whether to automatically decline conflicting events
    * @throws Exception If there is a conflict with an existing event
    */
@@ -103,7 +103,7 @@ public class CalendarManager implements ICalendarManager {
    * Gets all events that occur within the specified time range.
    *
    * @param startRange The start of the time range
-   * @param endRange The end of the time range
+   * @param endRange   The end of the time range
    * @return A list of events within the specified range
    */
   @Override
@@ -138,7 +138,8 @@ public class CalendarManager implements ICalendarManager {
         sb.append(event.isPublic()).append("\n");
       }
       writer.write(sb.toString());
-      OutputHandler.getInstance().println("Exported to CSV: " + new File(fileName).getAbsolutePath());
+      OutputHandler.getInstance()
+          .println("Exported to CSV: " + new File(fileName).getAbsolutePath());
     } catch (Exception e) {
       OutputHandler.getInstance().println("Error exporting CSV: " + e.getMessage());
     }
@@ -153,7 +154,9 @@ public class CalendarManager implements ICalendarManager {
   public void exportToGoogleCSV(String fileName) {
     try (PrintWriter writer = new PrintWriter(new File(fileName))) {
       StringBuilder sb = new StringBuilder();
-      sb.append("Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location,Private\n");
+      sb.append(
+          "Subject,Start Date,Start Time,End Date,End Time,"
+              + "All Day Event,Description,Location,Private\n");
       DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
       DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
       for (ICalendarEvent event : events) {
@@ -175,7 +178,8 @@ public class CalendarManager implements ICalendarManager {
         sb.append("\n");
       }
       writer.write(sb.toString());
-      OutputHandler.getInstance().println("Exported to Google CSV: " + new File(fileName).getAbsolutePath());
+      OutputHandler.getInstance()
+          .println("Exported to Google CSV: " + new File(fileName).getAbsolutePath());
     } catch (Exception e) {
       OutputHandler.getInstance().println("Error exporting Google CSV: " + e.getMessage());
     }
@@ -200,11 +204,11 @@ public class CalendarManager implements ICalendarManager {
   /**
    * Edits a single event that matches the specified criteria.
    *
-   * @param property The property to edit
+   * @param property  The property to edit
    * @param eventName The name of the event
-   * @param start The start time of the event
-   * @param end The end time of the event
-   * @param newValue The new value for the property
+   * @param start     The start time of the event
+   * @param end       The end time of the event
+   * @param newValue  The new value for the property
    * @return true if the event was found and updated, false otherwise
    */
   @Override
@@ -225,14 +229,15 @@ public class CalendarManager implements ICalendarManager {
   /**
    * Edits all events with the specified name that start at or after the specified time.
    *
-   * @param property The property to edit
+   * @param property  The property to edit
    * @param eventName The name of the events to edit
-   * @param start The start time to filter events
-   * @param newValue The new value for the property
+   * @param start     The start time to filter events
+   * @param newValue  The new value for the property
    * @return The number of events that were updated
    */
   @Override
-  public int editEventsByStart(String property, String eventName, LocalDateTime start, String newValue) {
+  public int editEventsByStart(String property, String eventName, LocalDateTime start,
+      String newValue) {
     int numberUpdated = 0;
     for (ICalendarEvent event : events) {
       if (event.getEventName().equals(eventName)
@@ -248,9 +253,9 @@ public class CalendarManager implements ICalendarManager {
   /**
    * Edits all events with the specified name.
    *
-   * @param property The property to edit
+   * @param property  The property to edit
    * @param eventName The name of the events to edit
-   * @param newValue The new value for the property
+   * @param newValue  The new value for the property
    * @return The number of events that were updated
    */
   @Override

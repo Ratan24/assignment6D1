@@ -4,25 +4,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import org.junit.Test;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.InputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.List;
-import controller.CalendarController;
 import controller.CommandParser;
-import controller.ICalendarController;
 import model.CalendarEvent;
 import model.CalendarManager;
 import model.ICalendarEvent;
 import model.ICalendarManager;
 
 /**
- * Tests the CommandParser functionality with various command types, formats, and edge cases
- * to verify correct parsing and execution of calendar management commands.
+ * Tests the CommandParser functionality with various command types, formats, and edge cases to
+ * verify correct parsing and execution of calendar management commands.
  */
 public class CommandParserTest {
 
@@ -205,8 +201,7 @@ public class CommandParserTest {
         + "2025-03-01T10:00 to 2025-03-01T11:00", manager);
     CommandParser.processCommand("create event Workshop from "
         + "2025-03-01T12:00 to 2025-03-01T13:00", manager);
-    String output = captureOutput(() ->
-    {
+    String output = captureOutput(() -> {
       try {
         CommandParser.processCommand("print events from "
             + "2025-03-01T09:00 to 2025-03-01T14:00", manager);
@@ -268,8 +263,7 @@ public class CommandParserTest {
     ICalendarManager manager = new CalendarManager("DefaultCalendar", "America/New_York");
     CommandParser.processCommand("create event StatusTest from "
         + "2025-03-01T10:00 to 2025-03-01T11:00", manager);
-    String output = captureOutput(() ->
-    {
+    String output = captureOutput(() -> {
       try {
         CommandParser.processCommand("show status on 2025-03-01T10:30", manager);
       } catch (Exception e) {
@@ -483,21 +477,23 @@ public class CommandParserTest {
     assertEquals("Quarterly results", ev.getDescription());
   }
 
-//  @Test
-//  public void testGetUpdateMessage() {
-//    assertEquals("Event updated successfully."
-//        , CommandParser.getUpdateMessage(true));
-//    assertEquals("Event not found or update failed."
-//        , CommandParser.getUpdateMessage(false));
-//  }
+  // @Test
+  // public void testGetUpdateMessage() {
+  //   assertEquals("Event updated successfully."
+  //       , CommandParser.getUpdateMessage(true));
+  //   assertEquals("Event not found or update failed."
+  //       , CommandParser.getUpdateMessage(false));
+  // }
 
   @Test
   public void testEditEventSubjectSingular() throws Exception {
     ICalendarManager manager = new CalendarManager("TestCal", "America/New_York");
-    String createCmd = "create event office-hours-cs5010-2 from 2024-03-13T10:00 to 2024-03-13T12:00";
+    String createCmd = "create event office-hours-cs5010-2 from 2024-03-13T10:00 "
+        + "to 2024-03-13T12:00";
     CommandParser.processCommand(createCmd, manager);
 
-    String editCmd = "edit event subject office-hours-cs5010-2 from 2024-03-13T10:00 to 2024-03-13T12:00 with office-hours-cs5010-second";
+    String editCmd = "edit event subject office-hours-cs5010-2 from 2024-03-13T10:00 "
+        + "to 2024-03-13T12:00 with office-hours-cs5010-second";
     CommandParser.processCommand(editCmd, manager);
 
     List<?> events = manager.getAllEvents();
@@ -514,7 +510,8 @@ public class CommandParserTest {
     CommandParser.processCommand(cmd1, manager);
     CommandParser.processCommand(cmd2, manager);
 
-    String editCmd = "edit events subject doctor-appointment from 2024-03-14T07:00 with annual-physical";
+    String editCmd = "edit events subject doctor-appointment from 2024-03-14T07:00 "
+        + "with annual-physical";
     CommandParser.processCommand(editCmd, manager);
 
     List<?> events = manager.getAllEvents();

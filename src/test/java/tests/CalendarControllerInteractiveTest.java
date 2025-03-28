@@ -1,16 +1,24 @@
 package tests;
 
-import static org.junit.Assert.*;
-import org.junit.*;
-import java.io.*;
+
+
+import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+
 import controller.CalendarController;
 import model.MultiCalendarManager;
-import view.OutputHandler;
+
 
 /**
- * Tests the interactive mode functionality of CalendarController.
- * Verifies command processing, output messages, and resource management
- * using simulated user input.
+ * Tests the interactive mode functionality of CalendarController. Verifies command processing,
+ * output messages, and resource management using simulated user input.
  */
 public class CalendarControllerInteractiveTest {
 
@@ -19,20 +27,25 @@ public class CalendarControllerInteractiveTest {
   private TestInputStream testIn;
 
   private static class TestInputStream extends InputStream {
+
     private final ByteArrayInputStream bais;
     private boolean closed = false;
+
     public TestInputStream(String input) {
       bais = new ByteArrayInputStream(input.getBytes());
     }
+
     @Override
     public int read() throws IOException {
       return bais.read();
     }
+
     @Override
     public void close() throws IOException {
       closed = true;
       super.close();
     }
+
     public boolean isClosed() {
       return closed;
     }

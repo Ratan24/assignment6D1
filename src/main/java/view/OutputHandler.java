@@ -3,16 +3,18 @@ package view;
 import javax.annotation.processing.Generated;
 
 /**
- * Singleton implementation of IOutputHandler interface.
- * Provides standard output functionality through System.out.
+ * Singleton implementation of IOutputHandler interface. Provides standard output functionality
+ * through System.out.
  */
 public class OutputHandler implements IOutputHandler {
+
   private static OutputHandler instance = new OutputHandler();
 
   /**
    * Private constructor to enforce singleton pattern.
    */
-  private OutputHandler() { }
+  private OutputHandler() {
+  }
 
   /**
    * Returns the singleton instance of OutputHandler.

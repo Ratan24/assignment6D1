@@ -5,21 +5,21 @@ import model.MultiCalendarManager;
 import view.OutputHandler;
 
 /**
- * Main application class for the Calendar application.
- * Handles command-line arguments and initializes the application.
+ * Main application class for the Calendar application. Handles command-line arguments and
+ * initializes the application.
  */
 public class CalendarApp {
+
   /**
-   * Entry point of the application.
-   * Supports interactive and headless modes.
+   * Entry point of the application. Supports interactive and headless modes.
    *
    * @param args Command-line arguments
    */
   public static void main(String[] args) {
     try {
       if (args.length < 2) {
-        OutputHandler.getInstance().println("Usage: --mode interactive OR --mode headless" +
-            " <commandFile.txt>");
+        OutputHandler.getInstance().println("Usage: --mode interactive OR --mode headless"
+            + " <commandFile.txt>");
         return;
       }
 

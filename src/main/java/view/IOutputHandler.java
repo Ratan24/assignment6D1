@@ -1,8 +1,7 @@
 package view;
 
 /**
- * Interface for handling output operations.
- * Provides methods for displaying text to the user.
+ * Interface for handling output operations. Provides methods for displaying text to the user.
  */
 public interface IOutputHandler {
 

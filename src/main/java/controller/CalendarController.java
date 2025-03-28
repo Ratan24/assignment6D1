@@ -1,6 +1,5 @@
 package controller;
 
-import model.ICalendarManager;
 import model.MultiCalendarManager;
 import view.OutputHandler;
 import java.io.BufferedReader;
@@ -9,8 +8,8 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * CalendarController implements ICalendarController.
- * It uses a MultiCalendarManager to support multiple calendars.
+ * CalendarController implements ICalendarController. It uses a MultiCalendarManager to support
+ * multiple calendars.
  */
 public class CalendarController implements ICalendarController {
 

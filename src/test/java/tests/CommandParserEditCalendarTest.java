@@ -1,14 +1,17 @@
 package tests;
 
-import static org.junit.Assert.*;
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import org.junit.Before;
+import org.junit.Test;
 import model.MultiCalendarManager;
 import controller.CommandParser;
 
 /**
- * Tests the calendar editing functionality in CommandParser, ensuring
- * it correctly processes edit commands with various parameter combinations
- * and properly handles error conditions.
+ * Tests the calendar editing functionality in CommandParser, ensuring it correctly processes edit
+ * commands with various parameter combinations and properly handles error conditions.
  */
 public class CommandParserEditCalendarTest {
 
@@ -46,7 +49,8 @@ public class CommandParserEditCalendarTest {
 
   @Test
   public void testEditCalendar_ExtraTokens_Ignored() throws Exception {
-    String command = "edit calendar --name Work extraToken --property timezone America/Los_Angeles extraExtra";
+    String command = "edit calendar --name Work extraToken --property timezone " +
+        "America/Los_Angeles extraExtra";
     CommandParser.processEditCalendar(command, multiCal);
     assertEquals("Work", multiCal.getCurrentCalendar().getCalendarName());
     assertEquals("America/Los_Angeles", multiCal.getCurrentCalendar().getTimeZone().toString());

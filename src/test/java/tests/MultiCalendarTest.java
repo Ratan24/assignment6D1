@@ -1,6 +1,10 @@
 package tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
@@ -12,15 +16,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
-import model.*;
+import model.CalendarEvent;
+import model.CalendarManager;
+import model.ICalendarEvent;
+import model.MultiCalendarManager;
 import controller.CommandParser;
-import view.OutputHandler;
 
 /**
  * Tests the MultiCalendarManager functionality including calendar management operations,
- * cross-calendar event copying, and delegation of event operations to the currently
- * active calendar. Also tests error handling for operations when no calendar exists
- * or when target resources cannot be found.
+ * cross-calendar event copying, and delegation of event operations to the currently active
+ * calendar. Also tests error handling for operations when no calendar exists or when target
+ * resources cannot be found.
  */
 public class MultiCalendarTest {
 
@@ -108,7 +114,8 @@ public class MultiCalendarTest {
     String createCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
     CommandParser.processCommand(createCommand, multiCal.getCurrentCalendar());
     outContent.reset();
-    String copyCommand = "copy event Meeting on 2025-03-27T09:00 --target NonExistent to 2025-03-27T11:00";
+    String copyCommand = "copy event Meeting on 2025-03-27T09:00 --target NonExistent "
+        + "to 2025-03-27T11:00";
     CommandParser.processCommand(copyCommand, multiCal);
   }
 
@@ -116,7 +123,8 @@ public class MultiCalendarTest {
   public void testCopyEvent_EventNotFound() throws Exception {
     multiCal.createCalendar("Work", "America/New_York");
     multiCal.createCalendar("Personal", "America/Los_Angeles");
-    String copyCommand = "copy event Meeting on 2025-03-27T09:00 --target Personal to 2025-03-27T11:00";
+    String copyCommand = "copy event Meeting on 2025-03-27T09:00 --target Personal "
+        + "to 2025-03-27T11:00";
     CommandParser.processCommand(copyCommand, multiCal);
   }
 
@@ -132,7 +140,8 @@ public class MultiCalendarTest {
   public void testCopyEventsBetween_NoEvents() throws Exception {
     multiCal.createCalendar("Work", "America/New_York");
     multiCal.createCalendar("Personal", "America/Los_Angeles");
-    String command = "copy events between 2025-03-27 and 2025-03-28 to --target Personal 2025-03-29";
+    String command = "copy events between 2025-03-27 and 2025-03-28 to --target Personal "
+        + "2025-03-29";
     CommandParser.processCommand(command, multiCal);
     String output = outContent.toString();
     assertTrue(output.contains("Copied 0 event(s)"));
@@ -147,7 +156,8 @@ public class MultiCalendarTest {
     CommandParser.processCommand(event1, multiCal.getCurrentCalendar());
     CommandParser.processCommand(event2, multiCal.getCurrentCalendar());
     outContent.reset();
-    String copyCommand = "copy events between 2025-03-27 and 2025-03-28 to --target Personal 2025-03-29";
+    String copyCommand = "copy events between 2025-03-27 and 2025-03-28 to --target Personal "
+        + "2025-03-29";
     CommandParser.processCommand(copyCommand, multiCal);
     String output = outContent.toString();
     assertTrue(output.contains("Copied 2 event(s)"));
@@ -207,7 +217,8 @@ public class MultiCalendarTest {
     String createCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
     CommandParser.processCommand(createCommand, multiCal.getCurrentCalendar());
     outContent.reset();
-    String editCommand = "edit event subject Meeting from 2025-03-27T09:00 to 2025-03-27T10:00 with UpdatedMeeting";
+    String editCommand = "edit event subject Meeting from 2025-03-27T09:00 to 2025-03-27T10:00 "
+        + "with UpdatedMeeting";
     CommandParser.processCommand(editCommand, multiCal.getCurrentCalendar());
     String output = outContent.toString();
     assertTrue(output.contains("Event updated successfully."));
@@ -330,8 +341,10 @@ public class MultiCalendarTest {
     assertEquals(original.getEventName(), copied.getEventName());
     assertEquals(targetStart, copied.getStart());
 
-    long originalDuration = java.time.Duration.between(original.getStart(), original.getEnd()).toMinutes();
-    long copiedDuration = java.time.Duration.between(copied.getStart(), copied.getEnd()).toMinutes();
+    long originalDuration = java.time.Duration.between(original.getStart(), original.getEnd())
+        .toMinutes();
+    long copiedDuration = java.time.Duration.between(copied.getStart(), copied.getEnd())
+        .toMinutes();
     assertEquals(originalDuration, copiedDuration);
 
     assertEquals(original.getDescription(), copied.getDescription());
@@ -348,7 +361,8 @@ public class MultiCalendarTest {
 
   @Test
   public void testGetEventsInRange_NoCalendar() {
-    List<ICalendarEvent> events = multiCal.getEventsInRange(LocalDateTime.now(), LocalDateTime.now().plusHours(1));
+    List<ICalendarEvent> events = multiCal.getEventsInRange(LocalDateTime.now(),
+        LocalDateTime.now().plusHours(1));
     assertNotNull(events);
     assertTrue("Expected no events in range when no calendar exists.", events.isEmpty());
   }
@@ -357,14 +371,16 @@ public class MultiCalendarTest {
   public void testExportToCSV_NoCalendar() {
     multiCal.exportToCSV("dummy.csv");
     String output = outContent.toString();
-    assertTrue("Expected error message when exporting CSV with no calendar.", output.contains("Error exporting CSV:"));
+    assertTrue("Expected error message when exporting CSV with no calendar.",
+        output.contains("Error exporting CSV:"));
   }
 
   @Test
   public void testExportToGoogleCSV_NoCalendar() {
     multiCal.exportToGoogleCSV("dummy.csv");
     String output = outContent.toString();
-    assertTrue("Expected error message when exporting Google CSV with no calendar.", output.contains("Error exporting Google CSV:"));
+    assertTrue("Expected error message when exporting Google CSV with no calendar.",
+        output.contains("Error exporting Google CSV:"));
   }
 
   @Test
@@ -384,7 +400,8 @@ public class MultiCalendarTest {
   @Test
   public void testEditEventsByStart_NoEvent() throws Exception {
     multiCal.createCalendar("Work", "America/New_York");
-    int count = multiCal.editEventsByStart("subject", "NonExistent", LocalDateTime.now(), "NewValue");
+    int count = multiCal.editEventsByStart("subject", "NonExistent", LocalDateTime.now(),
+        "NewValue");
     assertEquals("Expected 0 events updated by start.", 0, count);
   }
 
@@ -464,7 +481,8 @@ public class MultiCalendarTest {
     event.setPublic(false);
     multiCal.getCurrentCalendar().addEvent(event, false);
 
-    String command = "copy events between 2025-03-27 and 2025-03-27 to --target Personal 2025-03-29";
+    String command = "copy events between 2025-03-27 and 2025-03-27 to --target Personal "
+        + "2025-03-29";
     CommandParser.processCommand(command, multiCal);
 
     multiCal.useCalendar("Personal");
@@ -507,7 +525,8 @@ public class MultiCalendarTest {
     LocalDateTime end = LocalDateTime.of(2025, 3, 27, 10, 0);
     CalendarEvent event = new CalendarEvent("Meeting", start, end, false);
     multiCal.getCurrentCalendar().addEvent(event, false);
-    List<ICalendarEvent> events = multiCal.getEventsInRange(start.minusMinutes(1), end.plusMinutes(1));
+    List<ICalendarEvent> events = multiCal.getEventsInRange(start.minusMinutes(1),
+        end.plusMinutes(1));
     assertFalse("Expected non-empty event range", events.isEmpty());
     assertEquals("Meeting", events.get(0).getEventName());
   }
