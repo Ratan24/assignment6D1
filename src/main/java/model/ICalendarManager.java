@@ -89,7 +89,28 @@ public interface ICalendarManager {
    * @param newValue  The new value for the property
    * @return The number of events that were updated
    */
-  int editEventsByName(String property, String eventName, String newValue);
+  int editEventsByName(String property, String label, String updatedVal);
+
+  /**
+   * Deletes a single event identified by its properties.
+   *
+   * @param eventName The name/subject of the event to delete.
+   * @param start     The exact start time of the event to delete.
+   * @param end       The exact end time of the event to delete.
+   * @return true if the event was found and deleted, false otherwise.
+   * @throws Exception if an error occurs during deletion.
+   */
+  boolean deleteEvent(String eventName, LocalDateTime start, LocalDateTime end) throws Exception;
+
+  /**
+   * Imports events from a Google Calendar compatible CSV file into this calendar.
+   * Existing events are preserved. Conflicts are handled according to the calendar's rules (likely rejected).
+   *
+   * @param filePath The absolute path to the CSV file.
+   * @return The number of events successfully imported.
+   * @throws Exception If there's an error reading the file or parsing its content.
+   */
+  int importFromGoogleCSV(String filePath) throws Exception;
 
   /**
    * Gets all events in this calendar.

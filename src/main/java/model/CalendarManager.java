@@ -4,10 +4,14 @@ import view.OutputHandler;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.io.BufferedReader; // Added import
+import java.io.FileReader; // Added import
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime; // Added import
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException; // Added import
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -271,6 +275,125 @@ public class CalendarManager implements ICalendarManager {
     return numberUpdated;
   }
 
+  /**
+   * Deletes a single event identified by its properties.
+   *
+   * @param eventName The name/subject of the event to delete.
+   * @param start     The exact start time of the event to delete.
+   * @param end       The exact end time of the event to delete.
+   * @return true if the event was found and deleted, false otherwise.
+   */
+  @Override
+  public boolean deleteEvent(String eventName, LocalDateTime start, LocalDateTime end) throws Exception {
+    // Use removeIf for safe concurrent modification during iteration
+    boolean removed = events.removeIf(event ->
+        event.getEventName().equals(eventName) &&
+            event.getStart().equals(start) &&
+            event.getEnd().equals(end)
+    );
+    if (removed) {
+      // Re-sort if needed, although removal shouldn't break sort order
+      // events.sort(Comparator.comparing(ICalendarEvent::getStart));
+      OutputHandler.getInstance().println("Event deleted: " + eventName);
+    } else {
+       OutputHandler.getInstance().println("Event not found for deletion: " + eventName);
+    }
+    return removed;
+  }
+
+  /**
+   * Imports events from a Google Calendar compatible CSV file into this calendar.
+   * Existing events are preserved. Conflicts are handled according to the calendar's rules (likely rejected).
+   *
+   * @param filePath The absolute path to the CSV file.
+   * @return The number of events successfully imported.
+   * @throws Exception If there's an error reading the file or parsing its content.
+   */
+  @Override
+  public int importFromGoogleCSV(String filePath) throws Exception {
+    int importedCount = 0;
+    int skippedCount = 0;
+    // Google Format: Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location,Private
+    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a"); // Google uses AM/PM
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+      String line = reader.readLine(); // Read header line
+
+      if (line == null || !line.toLowerCase().contains("subject")) {
+        throw new Exception("Invalid CSV format: Header row missing or incorrect.");
+      }
+
+      while ((line = reader.readLine()) != null) {
+        // Basic CSV parsing (doesn't handle quotes within fields perfectly)
+        String[] fields = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+        if (fields.length < 9) {
+           OutputHandler.getInstance().println("Skipping malformed line: " + line);
+           skippedCount++;
+           continue;
+        }
+
+        try {
+          // Trim quotes and whitespace from fields
+          String subject = fields[0].trim().replaceAll("^\"|\"$", "");
+          String startDateStr = fields[1].trim().replaceAll("^\"|\"$", "");
+          String startTimeStr = fields[2].trim().replaceAll("^\"|\"$", "");
+          String endDateStr = fields[3].trim().replaceAll("^\"|\"$", "");
+          String endTimeStr = fields[4].trim().replaceAll("^\"|\"$", "");
+          String allDayStr = fields[5].trim().replaceAll("^\"|\"$", "");
+          String description = fields[6].trim().replaceAll("^\"|\"$", "");
+          String location = fields[7].trim().replaceAll("^\"|\"$", "");
+          String privateStr = fields[8].trim().replaceAll("^\"|\"$", "");
+
+          boolean isAllDay = Boolean.parseBoolean(allDayStr);
+          boolean isPrivate = Boolean.parseBoolean(privateStr); // Google uses "Private" column (True=Private)
+
+          LocalDate startDate = LocalDate.parse(startDateStr, dateFormatter);
+          LocalDate endDate = LocalDate.parse(endDateStr, dateFormatter);
+          LocalDateTime startDateTime;
+          LocalDateTime endDateTime;
+
+          if (isAllDay) {
+            startDateTime = startDate.atStartOfDay();
+            // Google CSV often uses the same start/end date for all-day.
+            // Our model might expect end date to be start of next day. Adjust if needed.
+            endDateTime = endDate.plusDays(1).atStartOfDay(); // Assume end is exclusive start of next day
+          } else {
+             if (startTimeStr.isEmpty() || endTimeStr.isEmpty()) {
+                 throw new Exception("Missing start/end time for non-all-day event.");
+             }
+             // Handle potential single-digit hour without leading zero if parser needs it
+             LocalTime startTime = LocalTime.parse(startTimeStr.toUpperCase(), timeFormatter);
+             LocalTime endTime = LocalTime.parse(endTimeStr.toUpperCase(), timeFormatter);
+             startDateTime = LocalDateTime.of(startDate, startTime);
+             endDateTime = LocalDateTime.of(endDate, endTime);
+          }
+
+          CalendarEvent newEvent = new CalendarEvent(subject, startDateTime, endDateTime, isAllDay);
+          newEvent.setDescription(description);
+          newEvent.setLocation(location);
+          newEvent.setPublic(!isPrivate); // Our model uses isPublic, Google uses isPrivate
+
+          // Attempt to add the event (handles conflict check)
+          addEvent(newEvent, true); // true = auto-decline conflict is default
+          importedCount++;
+
+        } catch (DateTimeParseException e) {
+            OutputHandler.getInstance().println("Skipping event due to date/time parse error: " + line + " - " + e.getMessage());
+            skippedCount++;
+        } catch (Exception e) {
+           // Catch conflicts or other errors from addEvent or parsing
+           OutputHandler.getInstance().println("Skipping event: " + fields[0] + " - " + e.getMessage());
+           skippedCount++;
+        }
+      }
+    }
+
+    OutputHandler.getInstance().println("Import complete. Imported: " + importedCount + ", Skipped: " + skippedCount);
+    return importedCount;
+  }
+
+
   private boolean updateProperty(ICalendarEvent event, String property, String newValue) {
     switch (property.toLowerCase()) {
       case "name":
@@ -286,9 +409,38 @@ public class CalendarManager implements ICalendarManager {
       case "public":
         event.setPublic(Boolean.parseBoolean(newValue));
         break;
+      case "allday":
+        boolean isAllDay = Boolean.parseBoolean(newValue);
+        event.setAllDay(isAllDay);
+        // Note: Ideally, changing allDay status might require adjusting start/end times
+        // (e.g., setting time to midnight), but the ICalendarEvent interface might handle this.
+        break;
+      case "start":
+        try {
+          LocalDateTime newStart = LocalDateTime.parse(newValue, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+          // WARNING: This does NOT re-check for conflicts after changing the time!
+          event.setStart(newStart);
+        } catch (DateTimeParseException e) {
+          OutputHandler.getInstance().println("Error parsing new start time: " + newValue);
+          return false; // Indicate failure
+        }
+        break;
+      case "end":
+         try {
+          LocalDateTime newEnd = LocalDateTime.parse(newValue, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+          // WARNING: This does NOT re-check for conflicts after changing the time!
+          event.setEnd(newEnd);
+        } catch (DateTimeParseException e) {
+          OutputHandler.getInstance().println("Error parsing new end time: " + newValue);
+          return false; // Indicate failure
+        }
+        break;
       default:
+         OutputHandler.getInstance().println("Attempted to edit unknown property: " + property);
         return false;
     }
+    // Re-sort events after potential time change
+    events.sort(Comparator.comparing(ICalendarEvent::getStart));
     return true;
   }
 

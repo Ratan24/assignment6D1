@@ -1,5 +1,6 @@
 package model;
 
+import java.time.LocalDate; // Added import
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -42,14 +43,29 @@ public class CalendarEvent implements ICalendarEvent {
    */
   @Override
   public boolean conflictsWith(ICalendarEvent other) {
-    if (this.isAllDay() ^ other.isAllDay()) {
-      return false;
-    }
-
+    // Case 1: Both are all-day events
     if (this.isAllDay() && other.isAllDay()) {
+      // Conflict if they are on the same date
       return this.getStart().toLocalDate().equals(other.getStart().toLocalDate());
     }
 
+    // Case 2: One is all-day, the other is timed
+    if (this.isAllDay() && !other.isAllDay()) {
+      // Conflict if the timed event's period overlaps with the all-day event's date
+      LocalDate allDayDate = this.getStart().toLocalDate();
+      LocalDate otherStartDate = other.getStart().toLocalDate();
+      LocalDate otherEndDate = other.getEnd().toLocalDate();
+      // Check if the timed event starts or ends on the all-day event's date,
+      // or if the timed event spans across the all-day event's date.
+      return !otherStartDate.isAfter(allDayDate) && !otherEndDate.isBefore(allDayDate);
+    }
+    if (!this.isAllDay() && other.isAllDay()) {
+      // Symmetric case, delegate to the other event's check
+      return other.conflictsWith(this);
+    }
+
+    // Case 3: Both are timed events
+    // Conflict if their time intervals overlap: (StartA < EndB) and (EndA > StartB)
     return this.getStart().isBefore(other.getEnd()) && this.getEnd().isAfter(other.getStart());
   }
 

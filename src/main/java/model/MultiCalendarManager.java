@@ -369,6 +369,36 @@ public class MultiCalendarManager implements ICalendarManager, IMultiCalendar {
   }
 
   /**
+   * Deletes a single event identified by its properties from the current calendar.
+   *
+   * @param eventName The name/subject of the event to delete.
+   * @param start     The exact start time of the event to delete.
+   * @param end       The exact end time of the event to delete.
+   * @return true if the event was found and deleted, false otherwise.
+   * @throws Exception if an error occurs during deletion or no calendar is active.
+   */
+  @Override
+  public boolean deleteEvent(String eventName, LocalDateTime start, LocalDateTime end) throws Exception {
+    return getCurrentCalendar().deleteEvent(eventName, start, end);
+    // Note: The try-catch blocks in other delegated methods might mask exceptions here.
+    // Consider removing those try-catch blocks or re-throwing exceptions if needed.
+  }
+
+  /**
+   * Imports events from a Google Calendar compatible CSV file into the current calendar.
+   *
+   * @param filePath The absolute path to the CSV file.
+   * @return The number of events successfully imported.
+   * @throws Exception If there's an error reading the file, parsing its content, or no calendar is active.
+   */
+  @Override
+  public int importFromGoogleCSV(String filePath) throws Exception {
+    return getCurrentCalendar().importFromGoogleCSV(filePath);
+    // Again, consider exception handling strategy for delegated methods.
+  }
+
+
+  /**
    * Gets all events in the current calendar.
    *
    * @return A list of all events in the current calendar

@@ -41,6 +41,35 @@
                     </targetClasses>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version> <!-- Use a recent version -->
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!-- Specify the main class -->
+                            <mainClass>calendar.CalendarApp</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <!-- This creates a JAR with all dependencies included -->
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <!-- Optional: Specify final JAR name -->
+                    <finalName>CalendarApp</finalName>
+                    <appendAssemblyId>false</appendAssemblyId> <!-- Avoids adding '-jar-with-dependencies' to the name -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
