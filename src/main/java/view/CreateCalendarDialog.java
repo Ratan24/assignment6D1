@@ -7,7 +7,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import model.MultiCalendarManager;
+// import model.MultiCalendarManager; // Removed model import
+import controller.ICalendarController; // Added controller import
 
 /**
  * Dialog for creating a new calendar with a specific timezone
@@ -185,16 +186,17 @@ public class CreateCalendarDialog extends JDialog {
    * Static method to show the dialog and create a calendar if approved
    *
    * @param parent The parent frame
-   * @param calendarManager The calendar manager to create the calendar in
+   * @param controller The controller to use for creating the calendar
    * @return true if a calendar was created, false otherwise
    */
-  public static boolean showDialog(Frame parent, MultiCalendarManager calendarManager) {
+  public static boolean showDialog(Frame parent, ICalendarController controller) { // Accept controller
     CreateCalendarDialog dialog = new CreateCalendarDialog(parent);
     dialog.setVisible(true);
 
     if (dialog.isApproved()) {
       try {
-        calendarManager.createCalendar(
+        // Use controller to create calendar
+        controller.createCalendar(
             dialog.getCalendarName(),
             dialog.getTimezone()
         );

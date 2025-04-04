@@ -7,11 +7,13 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map; // Added for potential future use if controller returns Map
 
-import model.MultiCalendarManager;
-import model.CalendarManager;
-import model.ICalendarEvent;
-import controller.CalendarController;
+// Removed model imports, will use controller
+// import model.MultiCalendarManager;
+// import model.CalendarManager;
+// import model.ICalendarEvent;
+import controller.ICalendarController; // Use interface
 
 /**
  * Main GUI implementation for the Calendar application.
@@ -33,8 +35,8 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
   private JButton createCalendarButton;
 
   // Model and controller references
-  private MultiCalendarManager calendarManager;
-  private CalendarController controller;
+  // private MultiCalendarManager calendarManager; // Removed model reference
+  private ICalendarController controller; // Use interface
   private ColorManager colorManager;
 
   // State
@@ -43,12 +45,11 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
   /**
    * Constructor for the GUI
    *
-   * @param calendarManager The model for the calendar application
-   * @param controller The controller for handling user actions
+   * @param controller The controller for handling user actions and data access
    */
-  public CalendarGUI(MultiCalendarManager calendarManager, CalendarController controller) {
+  public CalendarGUI(ICalendarController controller) { // Accept interface
     super("Calendar Application");
-    this.calendarManager = calendarManager;
+    // this.calendarManager = calendarManager; // Remove model reference
     this.controller = controller;
     this.currentYearMonth = YearMonth.now();
     this.colorManager = new ColorManager();
@@ -71,15 +72,11 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
    */
   private void createDefaultCalendarIfNeeded() {
     try {
-      // If no calendars exist, create a default one
-      if (getAvailableCalendars().length == 0) {
-        String defaultName = "My Calendar";
-        String defaultTimezone = java.time.ZoneId.systemDefault().getId();
-        calendarManager.createCalendar(defaultName, defaultTimezone);
-        updateCalendarSelector();
-      }
+      // Ask controller to handle default creation if needed
+      controller.createDefaultCalendarIfNeeded();
+      updateCalendarSelector(); // Update selector after potential creation
     } catch (Exception e) {
-      showError("Error creating default calendar: " + e.getMessage());
+      showError("Error during initial calendar setup: " + e.getMessage());
     }
   }
 
@@ -105,8 +102,10 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
     calendarSelector = new JComboBox<>();
     createCalendarButton = new JButton("New Calendar");
 
-    // Calendar panel (month view)
-    monthPanel = new MonthViewPanel(currentYearMonth, this);
+    // Calendar panel (month view) - Pass controller instead of this (parent) for data access?
+    // For now, keep passing 'this' and let MonthViewPanel call back to GUI, which calls controller.
+    // Alternative: Pass controller directly: new MonthViewPanel(currentYearMonth, controller);
+    monthPanel = new MonthViewPanel(currentYearMonth, this); // Keep passing parent GUI for now
 
     // Status panel
     statusPanel = new JPanel(new BorderLayout());
@@ -204,14 +203,17 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
     // Calendar selection
     calendarSelector.addActionListener(e -> {
       String selected = (String) calendarSelector.getSelectedItem();
-      if (selected != null) {
-        try {
-          calendarManager.useCalendar(selected);
-          updateView();
-          setStatus("Using calendar: " + selected);
-        } catch (Exception ex) {
-          showError("Error switching calendar: " + ex.getMessage());
-        }
+      // Avoid triggering on initial population or removal
+      if (selected != null && e.getActionCommand().equals("comboBoxChanged")) {
+          try {
+              controller.switchCalendar(selected);
+              updateView(); // Update view after switching
+              setStatus("Using calendar: " + selected);
+          } catch (Exception ex) {
+              showError("Error switching calendar: " + ex.getMessage());
+              // Optionally, re-select the previously active calendar if switch fails
+              updateCalendarSelector();
+          }
       }
     });
 
@@ -231,19 +233,26 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
 
     // Clear and repopulate the dropdown
     calendarSelector.removeAllItems();
-
+    String currentCalendarName = null;
     try {
-      for (String calendarName : getAvailableCalendars()) {
+      // Get names from controller
+      List<String> calendarNames = controller.getAvailableCalendarNames();
+      currentCalendarName = controller.getCurrentCalendarName(); // Get current name
+
+      for (String calendarName : calendarNames) {
         calendarSelector.addItem(calendarName);
       }
 
       // Select the current calendar if possible
-      try {
-        String currentCalendarName = calendarManager.getCurrentCalendar().getCalendarName();
+      if (currentCalendarName != null) {
         calendarSelector.setSelectedItem(currentCalendarName);
-      } catch (IllegalStateException e) {
-        // No current calendar, just leave the selection as is
+      } else if (!calendarNames.isEmpty()) {
+        // If no current one is set but list isn't empty, select the first one
+        calendarSelector.setSelectedIndex(0);
+        // Optionally, tell controller to use this one? Depends on desired behavior.
+        // controller.switchCalendar(calendarNames.get(0));
       }
+
     } catch (Exception e) {
       showError("Error loading calendars: " + e.getMessage());
     } finally {
@@ -251,34 +260,37 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
       for (ActionListener listener : listeners) {
         calendarSelector.addActionListener(listener);
       }
+      // Ensure the selected item reflects the actual current calendar after listeners are added
+      if (currentCalendarName != null) {
+          calendarSelector.setSelectedItem(currentCalendarName);
+      }
     }
   }
 
   /**
    * Get a list of available calendar names
    *
-   * @return Array of calendar names
+   * @return List of calendar names (changed from array)
    */
-  private String[] getAvailableCalendars() {
-    List<String> calendarNames = new ArrayList<>();
+  private List<String> getAvailableCalendars() {
     try {
-      for (CalendarManager calendar : calendarManager.getAllCalendars()) {
-        calendarNames.add(calendar.getCalendarName());
-      }
+      // Get names directly from controller
+      return controller.getAvailableCalendarNames();
     } catch (Exception e) {
       showError("Error retrieving calendars: " + e.getMessage());
+      return new ArrayList<>(); // Return empty list on error
     }
-    return calendarNames.toArray(new String[0]);
   }
 
   /**
    * Show a dialog to create a new calendar
    */
   private void showCreateCalendarDialog() {
-    boolean created = CreateCalendarDialog.showDialog(this, calendarManager);
+    // Pass controller to the dialog
+    boolean created = CreateCalendarDialog.showDialog(this, controller);
     if (created) {
-      updateCalendarSelector();
-      updateView();
+      updateCalendarSelector(); // Refresh dropdown
+      // updateView(); // View might not need full update, selector handles current
       setStatus("Calendar created successfully");
     }
   }
@@ -288,13 +300,19 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
    */
   private void showEditCalendarDialog() {
     try {
-      CalendarManager currentCal = calendarManager.getCurrentCalendar();
-      String currentName = currentCal.getCalendarName();
-      String currentTimezone = currentCal.getTimeZone().getId();
+      // Get current details from controller
+      String currentName = controller.getCurrentCalendarName();
+      String currentTimezone = controller.getCurrentCalendarTimezone();
+
+      if (currentName == null) {
+          showError("No calendar selected to edit.");
+          return;
+      }
 
       // Create components for the dialog
       JTextField nameField = new JTextField(currentName, 20);
-      JComboBox<String> timezoneComboBox = new JComboBox<>(getAvailableTimezones());
+      // Get timezones from controller
+      JComboBox<String> timezoneComboBox = new JComboBox<>(controller.getAvailableTimezones());
       timezoneComboBox.setSelectedItem(currentTimezone);
 
       JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
@@ -318,27 +336,28 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
 
         // Edit name if changed
         if (!newName.isEmpty() && !newName.equals(currentName)) {
-          calendarManager.editCalendar(currentName, "name", newName);
+          // Use controller to edit
+          controller.editCalendar(currentName, "name", newName);
           // Important: Update currentName for potential timezone edit below
-          currentName = newName;
+          currentName = newName; // Keep track locally for next potential edit call
           changed = true;
           setStatus("Calendar renamed to: " + newName);
         }
 
         // Edit timezone if changed
         if (newTimezone != null && !newTimezone.equals(currentTimezone)) {
-          // Use the potentially updated currentName
-          calendarManager.editCalendar(currentName, "timezone", newTimezone);
+          // Use controller to edit (using potentially updated currentName)
+          controller.editCalendar(currentName, "timezone", newTimezone);
           changed = true;
           setStatus("Calendar timezone updated to: " + newTimezone);
         }
 
         if (changed) {
           updateCalendarSelector(); // Update dropdown if name changed
-          // updateView(); // Consider if a full view update is needed for timezone change
+          // updateView(); // View update might be needed if timezone affects display
         }
       }
-    } catch (IllegalStateException e) {
+    } catch (IllegalStateException e) { // Should be caught earlier now
        showError("No calendar selected to edit.");
     } catch (Exception e) {
       showError("Error editing calendar: " + e.getMessage());
@@ -346,22 +365,20 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
   }
 
   /**
-   * Helper to get sorted available timezone IDs
+   * Helper to get sorted available timezone IDs - Now handled by Controller
    * @return Array of timezone IDs
    */
-  private String[] getAvailableTimezones() {
-      java.util.List<String> availableZones = new java.util.ArrayList<>(java.time.ZoneId.getAvailableZoneIds());
-      java.util.Collections.sort(availableZones);
-      return availableZones.toArray(new String[0]);
-  }
+  // private String[] getAvailableTimezones() { ... } // Removed
 
   /**
    * Show the import dialog
    */
   private void showImportDialog() {
     try {
-      FileOperationDialog.showImportDialog(this, calendarManager);
-      updateView();
+      // Pass controller to dialog
+      FileOperationDialog.showImportDialog(this, controller);
+      // Dialog should trigger updateView if needed (already does)
+      // updateView(); // Removed, handled by dialog callback/parent reference
     } catch (Exception e) {
       showError("Error showing import dialog: " + e.getMessage());
     }
@@ -372,7 +389,8 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
    */
   private void showExportDialog() {
     try {
-      FileOperationDialog.showExportDialog(this, calendarManager);
+      // Pass controller to dialog
+      FileOperationDialog.showExportDialog(this, controller);
     } catch (Exception e) {
       showError("Error showing export dialog: " + e.getMessage());
     }
@@ -399,9 +417,10 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
    */
   public void showEventsForDay(LocalDate date) {
     try {
-      DayEventsDialog.showDialog(this, date, calendarManager);
-      // After dialog closes, refresh the calendar view
-      updateView();
+      // Pass controller to dialog
+      DayEventsDialog.showDialog(this, date, controller);
+      // Dialog should trigger updateView if needed (already does via parent ref)
+      // updateView(); // Removed, handled by dialog callback/parent reference
     } catch (Exception e) {
       showError("Error showing events: " + e.getMessage());
     }
@@ -444,10 +463,11 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
     monthPanel.setYearMonth(currentYearMonth);
 
     try {
-      // Load events for each day
-      monthPanel.loadEvents(calendarManager);
+      // Pass controller to month panel to load events
+      monthPanel.loadEvents(controller);
     } catch (Exception e) {
-      // Just continue without showing events
+      showError("Error loading events for month view: " + e.getMessage());
+      // Optionally clear events in panel: monthPanel.clearEvents();
     }
 
     // Update calendar selector
@@ -466,12 +486,12 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
   /**
    * Static method to launch the GUI
    *
-   * @param calendarManager The model for the calendar application
    * @param controller The controller for the application
    */
-  public static void launchGUI(MultiCalendarManager calendarManager, CalendarController controller) {
+  public static void launchGUI(ICalendarController controller) { // Accept interface
     SwingUtilities.invokeLater(() -> {
-      CalendarGUI gui = new CalendarGUI(calendarManager, controller);
+      // Pass only the controller to the GUI constructor
+      CalendarGUI gui = new CalendarGUI(controller);
       gui.display();
     });
   }

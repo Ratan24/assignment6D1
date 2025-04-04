@@ -9,7 +9,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import model.ICalendarEvent;
-import model.MultiCalendarManager;
+// import model.MultiCalendarManager; // Removed model import
+import controller.ICalendarController; // Added controller import
 
 /**
  * Dialog for displaying and managing events on a specific day
@@ -17,7 +18,8 @@ import model.MultiCalendarManager;
 public class DayEventsDialog extends JDialog {
 
   private LocalDate date;
-  private MultiCalendarManager calendarManager;
+  // private MultiCalendarManager calendarManager; // Removed model reference
+  private ICalendarController controller; // Added controller reference
   private JList<ICalendarEvent> eventsList;
   private DefaultListModel<ICalendarEvent> eventsModel;
   private JButton addEventButton;
@@ -30,12 +32,13 @@ public class DayEventsDialog extends JDialog {
    *
    * @param parent The parent frame
    * @param date The date to show events for
-   * @param calendarManager The calendar manager
+   * @param controller The controller
    */
-  public DayEventsDialog(Frame parent, LocalDate date, MultiCalendarManager calendarManager) {
+  public DayEventsDialog(Frame parent, LocalDate date, ICalendarController controller) { // Accept controller
     super(parent, "Events on " + date.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")), true);
     this.date = date;
-    this.calendarManager = calendarManager;
+    // this.calendarManager = calendarManager; // Removed model assignment
+    this.controller = controller; // Store controller
 
     // Initialize components
     initializeComponents();
@@ -165,7 +168,8 @@ public class DayEventsDialog extends JDialog {
     eventsModel.clear();
 
     try {
-      List<ICalendarEvent> events = calendarManager.getCurrentCalendar().getEventsOn(date);
+      // Get events from controller
+      List<ICalendarEvent> events = controller.getEventsOn(date);
 
       // Sort events by start time
       events.sort((e1, e2) -> {
@@ -195,7 +199,8 @@ public class DayEventsDialog extends JDialog {
    * Create a new event using the EventDialog
    */
   private void createNewEvent() {
-    boolean saved = EventDialog.showDialog(this, calendarManager, date, null);
+    // Pass controller to EventDialog
+    boolean saved = EventDialog.showDialog(this, controller, date, null);
     if (saved) {
       loadEvents(); // Refresh the list if saved
     }
@@ -209,7 +214,8 @@ public class DayEventsDialog extends JDialog {
    * @param event The event to edit
    */
   private void editEvent(ICalendarEvent event) {
-    boolean saved = EventDialog.showDialog(this, calendarManager, date, event);
+    // Pass controller to EventDialog
+    boolean saved = EventDialog.showDialog(this, controller, date, event);
     if (saved) {
       loadEvents(); // Refresh the list if saved
     }
@@ -231,8 +237,8 @@ public class DayEventsDialog extends JDialog {
 
     if (result == JOptionPane.YES_OPTION) {
       try {
-        // Call the model's deleteEvent method
-        boolean deleted = calendarManager.getCurrentCalendar().deleteEvent(
+        // Call the controller's deleteEvent method
+        boolean deleted = controller.deleteEvent(
             event.getEventName(), event.getStart(), event.getEnd()
         );
 
@@ -344,10 +350,10 @@ public class DayEventsDialog extends JDialog {
    *
    * @param parent The parent frame
    * @param date The date to show events for
-   * @param calendarManager The calendar manager
+   * @param controller The controller
    */
-  public static void showDialog(Frame parent, LocalDate date, MultiCalendarManager calendarManager) {
-    DayEventsDialog dialog = new DayEventsDialog(parent, date, calendarManager);
+  public static void showDialog(Frame parent, LocalDate date, ICalendarController controller) { // Accept controller
+    DayEventsDialog dialog = new DayEventsDialog(parent, date, controller);
     dialog.setVisible(true);
   }
 }

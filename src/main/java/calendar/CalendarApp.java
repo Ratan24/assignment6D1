@@ -28,7 +28,7 @@ public class CalendarApp {
       // Process command-line arguments
       if (args.length == 0) {
         // Default to GUI mode if no arguments
-        launchGUIMode(calendarManager, controller);
+        launchGUIMode(controller); // Pass only controller
       } else if (args.length >= 2 && args[0].equalsIgnoreCase("--mode")) {
         // Process mode
         String mode = args[1].toLowerCase();
@@ -45,7 +45,7 @@ public class CalendarApp {
             }
             break;
           case "gui":
-            launchGUIMode(calendarManager, controller);
+            launchGUIMode(controller); // Pass only controller
             break;
           default:
             OutputHandler.getInstance().println("Invalid mode: " + mode);
@@ -64,11 +64,11 @@ public class CalendarApp {
   /**
    * Launch the GUI mode
    *
-   * @param calendarManager The model
    * @param controller The controller
    */
-  private static void launchGUIMode(MultiCalendarManager calendarManager, CalendarController controller) {
-    CalendarGUI.launchGUI(calendarManager, controller);
+  private static void launchGUIMode(CalendarController controller) { // Accept only controller
+    // Pass the controller (as ICalendarController) to the updated launchGUI method
+    CalendarGUI.launchGUI(controller);
   }
 
   /**

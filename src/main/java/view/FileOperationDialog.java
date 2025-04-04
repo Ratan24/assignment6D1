@@ -4,7 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import model.MultiCalendarManager;
+// import model.MultiCalendarManager; // Removed model import
+import controller.ICalendarController; // Added controller import
 
 /**
  * Dialog for importing/exporting calendar data to CSV files
@@ -17,7 +18,8 @@ public class FileOperationDialog extends JDialog {
   }
 
   private CalendarGUI parentGui; // Added reference to parent
-  private MultiCalendarManager calendarManager;
+  // private MultiCalendarManager calendarManager; // Removed model reference
+  private ICalendarController controller; // Added controller reference
   private OperationType operationType;
   private JFileChooser fileChooser;
   private JButton executeButton;
@@ -27,13 +29,14 @@ public class FileOperationDialog extends JDialog {
    * Constructor
    *
    * @param parent The parent frame
-   * @param calendarManager The calendar manager
+   * @param controller The controller
    * @param type The operation type (import or export)
    */
-  public FileOperationDialog(CalendarGUI parent, MultiCalendarManager calendarManager, OperationType type) {
+  public FileOperationDialog(CalendarGUI parent, ICalendarController controller, OperationType type) { // Accept controller
     super(parent, type == OperationType.IMPORT ? "Import from CSV" : "Export to CSV", true);
     this.parentGui = parent; // Store parent
-    this.calendarManager = calendarManager;
+    // this.calendarManager = calendarManager; // Removed model assignment
+    this.controller = controller; // Store controller
     this.operationType = type;
 
     // Initialize components
@@ -142,8 +145,8 @@ public class FileOperationDialog extends JDialog {
   private boolean performOperation(File file) {
     try {
       if (operationType == OperationType.EXPORT) {
-        // Export calendar to Google-compatible CSV
-        calendarManager.getCurrentCalendar().exportToGoogleCSV(file.getAbsolutePath());
+        // Export calendar using controller
+        controller.exportToGoogleCSV(file.getAbsolutePath());
 
         JOptionPane.showMessageDialog(
             this,
@@ -154,7 +157,8 @@ public class FileOperationDialog extends JDialog {
 
         return true;
       } else { // Import
-        int importedCount = calendarManager.getCurrentCalendar().importFromGoogleCSV(file.getAbsolutePath());
+        // Import using controller
+        int importedCount = controller.importFromGoogleCSV(file.getAbsolutePath());
 
         JOptionPane.showMessageDialog(
             this,
@@ -184,11 +188,11 @@ public class FileOperationDialog extends JDialog {
    * Static method to show the import dialog
    *
    * @param parent The parent GUI frame
-   * @param calendarManager The calendar manager
+   * @param controller The controller
    */
-  public static void showImportDialog(CalendarGUI parent, MultiCalendarManager calendarManager) {
+  public static void showImportDialog(CalendarGUI parent, ICalendarController controller) { // Accept controller
     FileOperationDialog dialog = new FileOperationDialog(
-        parent, calendarManager, OperationType.IMPORT
+        parent, controller, OperationType.IMPORT
     );
     dialog.setVisible(true);
   }
@@ -197,11 +201,11 @@ public class FileOperationDialog extends JDialog {
    * Static method to show the export dialog
    *
    * @param parent The parent GUI frame
-   * @param calendarManager The calendar manager
+   * @param controller The controller
    */
-  public static void showExportDialog(CalendarGUI parent, MultiCalendarManager calendarManager) {
+  public static void showExportDialog(CalendarGUI parent, ICalendarController controller) { // Accept controller
     FileOperationDialog dialog = new FileOperationDialog(
-        parent, calendarManager, OperationType.EXPORT
+        parent, controller, OperationType.EXPORT
     );
     dialog.setVisible(true);
   }

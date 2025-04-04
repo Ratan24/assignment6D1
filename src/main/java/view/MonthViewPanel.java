@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.Locale;
 
 import model.ICalendarEvent;
-import model.MultiCalendarManager;
+// import model.MultiCalendarManager; // Removed model import
+import controller.ICalendarController; // Added controller import
 
 /**
  * Panel that displays a month view of the calendar
@@ -119,11 +120,11 @@ public class MonthViewPanel extends JPanel {
   }
 
   /**
-   * Load events from the calendar manager
+   * Load events using the controller
    *
-   * @param calendarManager The calendar manager
+   * @param controller The controller to fetch events from
    */
-  public void loadEvents(MultiCalendarManager calendarManager) {
+  public void loadEvents(ICalendarController controller) { // Accept controller interface
     // Clear events from all day panels first
     for (Component comp : daysPanel.getComponents()) {
       if (comp instanceof DayPanel) {
@@ -131,14 +132,19 @@ public class MonthViewPanel extends JPanel {
       }
     }
 
-    // Get color for current calendar
+    // Get color for current calendar using the controller
     Color calendarColor = Color.BLUE; // Default color
     try {
-      String calendarName = calendarManager.getCurrentCalendar().getCalendarName();
-      calendarColor = colorManager.getColorForCalendar(calendarName);
+      String calendarName = controller.getCurrentCalendarName();
+      if (calendarName != null) {
+          calendarColor = colorManager.getColorForCalendar(calendarName);
+      } else {
+          // Handle case where no calendar is selected (e.g., use default or disable event display)
+          System.err.println("No current calendar selected for color.");
+      }
     } catch (Exception e) {
       System.err.println("Error getting calendar color: " + e.getMessage());
-      // Use default color if there's an error getting the specific one
+      // Use default color if there's an error
     }
 
     // Define the start and end of the month view
@@ -149,9 +155,8 @@ public class MonthViewPanel extends JPanel {
     LocalDateTime viewEnd = monthEnd.plusDays(1).atStartOfDay();
 
     try {
-      // Get all events that overlap with the current month view
-      List<ICalendarEvent> eventsForMonth = calendarManager.getCurrentCalendar()
-          .getEventsInRange(viewStart, viewEnd);
+      // Get all events that overlap with the current month view using the controller
+      List<ICalendarEvent> eventsForMonth = controller.getEventsInRange(viewStart, viewEnd);
 
       // Go through all day panels again to add events
       for (Component comp : daysPanel.getComponents()) {
