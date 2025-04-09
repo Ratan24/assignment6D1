@@ -12,11 +12,12 @@ import java.util.List;
  * "until date" recurrence patterns.
  */
 public class RecurringEventGenerator implements IRecurringEventGenerator {
-
-  private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-  private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
-      "yyyy-MM-dd'T'HH:mm");
-
+ 
+   private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+   // Explicitly set Locale just in case
+   private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
+       "yyyy-MM-dd'T'HH:mm", java.util.Locale.ENGLISH);
+ 
   /**
    * Converts a day of the week to a single character code.
    *
@@ -84,12 +85,13 @@ public class RecurringEventGenerator implements IRecurringEventGenerator {
 
     List<CalendarEvent> generatedEvents = new ArrayList<>();
     String[] repeatTokens = trimmedRepeatPart.split(" ");
-    String weekdayString = repeatTokens[0].trim().toUpperCase();
-
-    if (trimmedRepeatPart.toLowerCase().contains(" for ")) {
-      if (repeatTokens.length < 4
-          || !repeatTokens[1].equalsIgnoreCase("for")
-          || !repeatTokens[3].equalsIgnoreCase("times")) {
+     String weekdayString = repeatTokens[0].trim().toUpperCase();
+ 
+     if (trimmedRepeatPart.toLowerCase().contains(" for ")) {
+       // Check for "<Weekdays> for N times" format - requires exactly 4 parts
+       if (repeatTokens.length != 4
+           || !repeatTokens[1].equalsIgnoreCase("for")
+           || !repeatTokens[3].equalsIgnoreCase("times")) {
         throw new Exception("Invalid recurring event format (for N times).");
       }
       int occurrencesCount = Integer.parseInt(repeatTokens[2]);

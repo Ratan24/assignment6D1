@@ -1,9 +1,13 @@
 package calendar;
 
+// Import the enhanced controller and its interface
+import controller.EnhancedCalendarController;
+import controller.IEnhancedCalendarController;
+// Keep original controller for non-GUI modes for now
 import controller.CalendarController;
 import model.MultiCalendarManager;
 import view.CalendarGUI;
-import view.OutputHandler;
+import view.OutputHandler; // Still needed for non-GUI modes via original controller
 
 /**
  * Main application class for the Calendar application.
@@ -21,34 +25,39 @@ public class CalendarApp {
    */
   public static void main(String[] args) {
     try {
-      // Create model and controller
+      // Create model
       MultiCalendarManager calendarManager = new MultiCalendarManager();
-      CalendarController controller = new CalendarController(calendarManager);
 
-      // Process command-line arguments
-      if (args.length == 0) {
-        // Default to GUI mode if no arguments
-        launchGUIMode(controller); // Pass only controller
+      // Determine mode and create appropriate controller
+      if (args.length == 0 || (args.length >= 2 && args[0].equalsIgnoreCase("--mode") && args[1].equalsIgnoreCase("gui"))) {
+        // GUI Mode: Use Enhanced Controller
+        EnhancedCalendarController enhancedController = new EnhancedCalendarController(calendarManager);
+        enhancedController.initialize(); // Initialize (registers listener)
+        launchGUIMode(enhancedController); // Pass enhanced controller
+
       } else if (args.length >= 2 && args[0].equalsIgnoreCase("--mode")) {
-        // Process mode
+        // Non-GUI Modes: Use Original Controller (for now)
+        // TODO: Consider refactoring original controller or CommandParser later
+        //       to also avoid direct OutputHandler use if strict MVC is desired everywhere.
+        CalendarController originalController = new CalendarController(calendarManager);
         String mode = args[1].toLowerCase();
         switch (mode) {
           case "interactive":
-            controller.runInteractiveMode();
+            originalController.runInteractiveMode();
             break;
           case "headless":
             if (args.length < 3) {
-              OutputHandler.getInstance().println("Headless mode requires a command file.");
+              OutputHandler.getInstance().println("Headless mode requires a command file."); // Original controller might still use this
               printUsage();
             } else {
-              controller.runHeadlessMode(args[2]);
+              originalController.runHeadlessMode(args[2]);
             }
             break;
-          case "gui":
-            launchGUIMode(controller); // Pass only controller
-            break;
+          // case "gui": // Already handled above
+          //   launchGUIMode(controller);
+          //   break;
           default:
-            OutputHandler.getInstance().println("Invalid mode: " + mode);
+            OutputHandler.getInstance().println("Invalid mode: " + mode); // Keep for invalid non-GUI modes
             printUsage();
             break;
         }
@@ -63,11 +72,12 @@ public class CalendarApp {
 
   /**
    * Launch the GUI mode
+   * Launch the GUI mode using the enhanced controller.
    *
-   * @param controller The controller
+   * @param controller The enhanced controller instance.
    */
-  private static void launchGUIMode(CalendarController controller) { // Accept only controller
-    // Pass the controller (as ICalendarController) to the updated launchGUI method
+  private static void launchGUIMode(IEnhancedCalendarController controller) { // Accept enhanced interface
+    // Pass the enhanced controller to the GUI's launch method
     CalendarGUI.launchGUI(controller);
   }
 

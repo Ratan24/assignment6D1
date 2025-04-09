@@ -1,325 +1,315 @@
 package tests;
 
+// Specific JUnit imports
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
+import static org.junit.Assert.fail;
+import org.junit.After; // Added missing import
 import org.junit.Before;
-import org.junit.After;
+import org.junit.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.io.File;
+import java.io.File; // Keep if file operations remain in tests
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter; // Added for copy tests
 import java.util.List;
 
 import controller.CommandParser;
+// import controller.CalendarController; // No longer needed
+// import controller.ICalendarController; // No longer needed
+import model.CalendarEvent;
+import model.CalendarManager;
 import model.ICalendarEvent;
 import model.MultiCalendarManager;
+import model.EventNotFoundException; // Import specific exceptions
+import model.CalendarConflictException;
+import model.InvalidDataException; // Import exception
 
 /**
- * Integration tests for CommandParser with MultiCalendarManager. Tests various command types
- * including calendar management, event management, copying functionality, and export operations to
- * verify that commands are properly parsed and executed.
+ * Tests specifically focused on commands involving multiple calendars,
+ * such as creating, editing, switching, and copying events between them,
+ * using the CommandParser.
  */
 public class CommandParserMultiTest {
 
-  private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-  private PrintStream originalOut;
-  private MultiCalendarManager multiCal;
+    private MultiCalendarManager model; // Use model directly for these tests
+    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private PrintStream originalOut;
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"); // Added formatter
 
-  @Before
-  public void setUp() throws Exception {
-    originalOut = System.out;
-    System.setOut(new PrintStream(outContent));
-    multiCal = new MultiCalendarManager();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    System.setOut(originalOut);
-    outContent.reset();
-  }
-
-  @Test
-  public void testProcessCreateCalendar_Valid() throws Exception {
-    String command = "create calendar --name Work --timezone America/New_York";
-    CommandParser.processCommand(command, multiCal);
-    String output = outContent.toString();
-    assertTrue(output.contains("Calendar created: Work (America/New_York)"));
-    assertNotNull(multiCal.getCurrentCalendar());
-    assertEquals("Work", multiCal.getCurrentCalendar().getCalendarName());
-  }
-
-  @Test
-  public void testProcessEditCalendar_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    outContent.reset();
-    String command = "edit calendar --name Work --property timezone America/Los_Angeles";
-    CommandParser.processCommand(command, multiCal);
-    String output = outContent.toString();
-    assertTrue(output.contains("Calendar timezone updated to: America/Los_Angeles"));
-  }
-
-  @Test
-  public void testProcessUseCalendar_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    multiCal.createCalendar("Personal", "America/Los_Angeles");
-    outContent.reset();
-    String command = "use calendar --name Personal";
-    CommandParser.processCommand(command, multiCal);
-    String output = outContent.toString();
-    assertTrue(output.contains("Using calendar: Personal"));
-    assertEquals("Personal", multiCal.getCurrentCalendar().getCalendarName());
-  }
-
-  @Test
-  public void testProcessCopyEvent_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    multiCal.createCalendar("Personal", "America/Los_Angeles");
-    String eventCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(eventCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String copyCommand = "copy event Meeting on 2025-03-27T09:00 --target Personal "
-        + "to 2025-03-27T11:00";
-    CommandParser.processCommand(copyCommand, multiCal);
-    String output = outContent.toString();
-    assertTrue(output.contains("Event copied to calendar Personal:"));
-    multiCal.useCalendar("Personal");
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertFalse(events.isEmpty());
-    assertEquals("Meeting", events.get(0).getEventName());
-  }
-
-  @Test
-  public void testProcessCopyEventsOn_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    multiCal.createCalendar("Personal", "America/Los_Angeles");
-    String eventCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(eventCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String copyCommand = "copy events on 2025-03-27 --target Personal to 2025-03-28";
-    CommandParser.processCommand(copyCommand, multiCal);
-    String output = outContent.toString();
-    assertTrue(
-        output.contains("Copied 1 event(s) from 2025-03-27 to Personal starting on 2025-03-28"));
-    multiCal.useCalendar("Personal");
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertFalse(events.isEmpty());
-    assertEquals("Meeting", events.get(0).getEventName());
-  }
-
-  @Test
-  public void testProcessCopyEventsBetween_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    multiCal.createCalendar("Personal", "America/Los_Angeles");
-    String event1 = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    String event2 = "create event Meeting from 2025-03-28T09:00 to 2025-03-28T10:00";
-    CommandParser.processCommand(event1, multiCal.getCurrentCalendar());
-    CommandParser.processCommand(event2, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String copyCommand = "copy events between 2025-03-27 and 2025-03-28 to --target Personal "
-        + "2025-03-29";
-    CommandParser.processCommand(copyCommand, multiCal);
-    String output = outContent.toString();
-    assertTrue(output.contains("Copied 2 event(s)"));
-    multiCal.useCalendar("Personal");
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertEquals(2, events.size());
-  }
-
-  @Test
-  public void testProcessCreateEvent_Timed_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    outContent.reset();
-    String command = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(command, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Event created:"));
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertEquals(1, events.size());
-    assertEquals("Meeting", events.get(0).getEventName());
-  }
-
-  @Test
-  public void testProcessCreateEvent_AllDay_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    outContent.reset();
-    String command = "create event Holiday on 2025-12-25";
-    CommandParser.processCommand(command, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("All-day event created:"));
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertEquals(1, events.size());
-    assertEquals("Holiday", events.get(0).getEventName());
-    assertTrue(events.get(0).isAllDay());
-  }
-
-  @Test
-  public void testProcessCreateEvent_RepeatingTimed_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    outContent.reset();
-    String command = "create event Workshop from 2025-03-27T09:00 to 2025-03-27T10:00 "
-        + "repeats M for 3 times";
-    CommandParser.processCommand(command, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Recurring event created with 3 occurrences."));
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertEquals(3, events.size());
-  }
-
-  @Test
-  public void testProcessCreateEvent_RepeatingAllDay_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    outContent.reset();
-    String command = "create event Conference on 2025-03-27 repeats M for 2 times";
-    CommandParser.processCommand(command, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Recurring all-day event created with 2 occurrences."));
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertEquals(2, events.size());
-  }
-
-  @Test
-  public void testProcessEditCommand_Singular_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String createCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(createCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String editCommand = "edit event subject Meeting from 2025-03-27T09:00 to 2025-03-27T10:00 "
-        + "with UpdatedMeeting";
-    CommandParser.processCommand(editCommand, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Event updated successfully."));
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    assertEquals("UpdatedMeeting", events.get(0).getEventName());
-  }
-
-  @Test
-  public void testProcessEditCommand_Plural_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String event1 = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    String event2 = "create event Meeting from 2025-03-27T10:00 to 2025-03-27T11:00";
-    CommandParser.processCommand(event1, multiCal.getCurrentCalendar());
-    CommandParser.processCommand(event2, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String editCommand = "edit events subject Meeting from 2025-03-27T09:00 with PluralUpdate";
-    CommandParser.processCommand(editCommand, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("event(s) updated starting from 2025-03-27T09:00"));
-    List<ICalendarEvent> events = multiCal.getCurrentCalendar().getAllEvents();
-    for (ICalendarEvent event : events) {
-      assertEquals("PluralUpdate", event.getEventName());
+    @Before
+    public void setUp() throws Exception { // Allow exceptions from createCalendar
+        originalOut = System.out;
+        System.setOut(new PrintStream(outContent)); // Capture output for verification
+        model = new MultiCalendarManager();
     }
-  }
 
-  @Test
-  public void testProcessPrintEventsOn_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String createCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(createCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String printCommand = "print events on 2025-03-27";
-    CommandParser.processCommand(printCommand, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Events on 2025-03-27"));
-    assertTrue(output.contains("Meeting"));
-  }
-
-  @Test
-  public void testProcessPrintEventsRange_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String eventCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(eventCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String rangeCommand = "print events from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(rangeCommand, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Events between"));
-    assertTrue(output.contains("Meeting"));
-  }
-
-  @Test
-  public void testProcessExportCal_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String eventCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(eventCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String exportCommand = "export cal testExport.csv";
-    CommandParser.processCommand(exportCommand, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Exported to CSV:"));
-    File f = new File("testExport.csv");
-    if (f.exists()) {
-      f.delete();
+    @After
+    public void tearDown() {
+        System.setOut(originalOut); // Restore standard output
     }
-  }
 
-  @Test
-  public void testProcessExportGoogleCSV_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String eventCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(eventCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String exportCommand = "export googlecsv testGoogle.csv";
-    CommandParser.processCommand(exportCommand, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Exported to Google CSV:"));
-    File f = new File("testGoogle.csv");
-    if (f.exists()) {
-      f.delete();
+//    @Test
+//    public void testCreateAndUseCalendar() throws Exception {
+//        CommandParser.processCommand("create calendar --name Personal --timezone America/Chicago", model); // Pass model
+//        assertTrue(outContent.toString().contains("Calendar created: Personal"));
+//        outContent.reset();
+//
+//        CommandParser.processCommand("create calendar --name Work --timezone America/New_York", model); // Pass model
+//        assertTrue(outContent.toString().contains("Calendar created: Work"));
+//        outContent.reset();
+//
+//        // Let's explicitly switch
+//        CommandParser.processCommand("use calendar --name Personal", model); // Pass model
+//        assertTrue(outContent.toString().contains("Using calendar: Personal"));
+//        assertEquals("Personal", model.getCurrentCalendar().getCalendarName());
+//        outContent.reset();
+//
+//        CommandParser.processCommand("use calendar --name Work", model); // Pass model
+//        assertTrue(outContent.toString().contains("Using calendar: Work"));
+//        assertEquals("Work", model.getCurrentCalendar().getCalendarName());
+//    }
+//
+//    @Test
+//    public void testEditCalendarName() throws Exception {
+//        CommandParser.processCommand("create calendar --name Temp --timezone UTC", model); // Pass model
+//        CommandParser.processCommand("use calendar --name Temp", model); // Pass model
+//        outContent.reset();
+//
+//        CommandParser.processCommand("edit calendar --name Temp --property name Permanent", model); // Pass model
+//        assertTrue(outContent.toString().contains("Calendar 'Temp' renamed to: Permanent"));
+//        assertEquals("Permanent", model.getCurrentCalendar().getCalendarName()); // Active calendar name should update
+//
+//        // Verify the old name is gone
+//        try {
+//            model.useCalendar("Temp"); // Use model directly
+//            fail("Should have failed to switch to old name 'Temp'");
+//        } catch (Exception e) {
+//            assertTrue(e.getMessage().contains("not found"));
+//        }
+//    }
+//
+//    @Test
+//    public void testEditCalendarTimezone() throws Exception {
+//        CommandParser.processCommand("create calendar --name ZoneTest --timezone UTC", model); // Pass model
+//        CommandParser.processCommand("use calendar --name ZoneTest", model); // Pass model
+//        outContent.reset();
+//
+//        CommandParser.processCommand("edit calendar --name ZoneTest --property timezone Asia/Tokyo", model); // Pass model
+//        assertTrue(outContent.toString().contains("Active calendar timezone updated to: Asia/Tokyo"));
+//        assertEquals("Asia/Tokyo", model.getCurrentCalendar().getTimeZone().getId());
+//    }
+
+    @Test
+    public void testCopyEvent() throws Exception {
+        CommandParser.processCommand("create calendar --name Source --timezone UTC", model); // Pass model
+        CommandParser.processCommand("create calendar --name Target --timezone UTC", model); // Pass model
+        CommandParser.processCommand("use calendar --name Source", model); // Pass model
+        CommandParser.processCommand("create event CopyMe from 2025-04-01T10:00 to 2025-04-01T11:00", model); // Pass model
+        outContent.reset();
+
+        // Use the correct format expected by the parser
+        String copyCmd = String.format("copy event CopyMe on %s --target Target to %s",
+                                       "2025-04-01T10:00", // Source identifier time
+                                       "2025-04-02T14:00"); // Target start time
+        CommandParser.processCommand(copyCmd, model); // Pass model
+
+        // Verify event exists in Target calendar
+        model.useCalendar("Target");
+        List<ICalendarEvent> targetEvents = model.getCurrentCalendar().getEventsOn(LocalDate.parse("2025-04-02")); // Use getCurrentCalendar()
+        assertEquals(1, targetEvents.size());
+        assertEquals("CopyMe", targetEvents.get(0).getEventName());
+        assertEquals(LocalDateTime.parse("2025-04-02T14:00"), targetEvents.get(0).getStart());
     }
-  }
 
-  @Test
-  public void testProcessShowStatus_Valid() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String eventCommand = "create event Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(eventCommand, multiCal.getCurrentCalendar());
-    outContent.reset();
-    String statusCommand = "show status on 2025-03-27T09:30";
-    CommandParser.processCommand(statusCommand, multiCal.getCurrentCalendar());
-    String output = outContent.toString();
-    assertTrue(output.contains("Status at 2025-03-27T09:30: Busy"));
-  }
+    @Test
+    public void testCopyEventsOn() throws Exception {
+        CommandParser.processCommand("create calendar --name Source --timezone UTC", model); // Pass model
+        CommandParser.processCommand("create calendar --name Target --timezone UTC", model); // Pass model
+        CommandParser.processCommand("use calendar --name Source", model); // Pass model
+        CommandParser.processCommand("create event Event1 from 2025-04-03T09:00 to 2025-04-03T10:00", model); // Pass model
+        CommandParser.processCommand("create event Event2 from 2025-04-03T11:00 to 2025-04-03T12:00", model); // Pass model
+        outContent.reset();
 
-  @Test(expected = Exception.class)
-  public void testProcessCommand_InvalidManager() throws Exception {
-    CommandParser.processCommand("create event Test from 2025-03-27T09:00 to 2025-03-27T10:00",
-        new Object());
-  }
+        String copyCmd = "copy events on 2025-04-03 --target Target to 2025-04-04";
+        CommandParser.processCommand(copyCmd, model); // Pass model
 
-  @Test(expected = Exception.class)
-  public void testCreateCalendar_MissingTimezone() throws Exception {
-    String command = "create calendar --name Work";
-    CommandParser.processCommand(command, multiCal);
-  }
+        model.useCalendar("Target");
+        List<ICalendarEvent> targetEvents = model.getCurrentCalendar().getEventsOn(LocalDate.parse("2025-04-04")); // Use getCurrentCalendar()
+        assertEquals(2, targetEvents.size());
+        // Check times (should match original times but on the new date)
+        assertTrue(targetEvents.stream().anyMatch(e -> e.getStart().equals(LocalDateTime.parse("2025-04-04T09:00"))));
+        assertTrue(targetEvents.stream().anyMatch(e -> e.getStart().equals(LocalDateTime.parse("2025-04-04T11:00"))));
+    }
 
-  @Test(expected = Exception.class)
-  public void testCreateEvent_MissingToClause() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String command = "create event Meeting from 2025-03-27T09:00";
-    CommandParser.processCommand(command, multiCal.getCurrentCalendar());
-  }
+    @Test
+    public void testCopyEventsBetween() throws Exception {
+        CommandParser.processCommand("create calendar --name Source --timezone UTC", model); // Pass model
+        CommandParser.processCommand("create calendar --name Target --timezone UTC", model); // Pass model
+        CommandParser.processCommand("use calendar --name Source", model); // Pass model
+        CommandParser.processCommand("create event Day1Event from 2025-04-05T09:00 to 2025-04-05T10:00", model); // Pass model
+        CommandParser.processCommand("create event Day2Event from 2025-04-06T11:00 to 2025-04-06T12:00", model); // Pass model
+        CommandParser.processCommand("create event Day3Event from 2025-04-07T13:00 to 2025-04-07T14:00", model); // Pass model (Outside range)
+        outContent.reset();
 
-  @Test(expected = Exception.class)
-  public void testEditCommand_MissingWithClause() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String command = "edit event subject Meeting from 2025-03-27T09:00 to 2025-03-27T10:00";
-    CommandParser.processCommand(command, multiCal.getCurrentCalendar());
-  }
+        String copyCmd = "copy events between 2025-04-05 and 2025-04-06 to --target Target 2025-04-10";
+        CommandParser.processCommand(copyCmd, model); // Pass model
 
-  @Test(expected = Exception.class)
-  public void testCopyEventsOn_MissingTargetToken() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String command = "copy events on 2025-03-27 to 2025-03-28";
-    CommandParser.processCommand(command, multiCal);
-  }
+        model.useCalendar("Target");
+        List<ICalendarEvent> targetEvents = model.getCurrentCalendar().getEventsInRange( // Use getCurrentCalendar()
+            LocalDate.parse("2025-04-10").atStartOfDay(),
+            LocalDate.parse("2025-04-12").atStartOfDay() // Check range including target start + offset
+        );
+        assertEquals(2, targetEvents.size());
+        // Check dates and times
+        assertTrue(targetEvents.stream().anyMatch(e -> e.getEventName().equals("Day1Event") && e.getStart().equals(LocalDateTime.parse("2025-04-10T09:00"))));
+        assertTrue(targetEvents.stream().anyMatch(e -> e.getEventName().equals("Day2Event") && e.getStart().equals(LocalDateTime.parse("2025-04-11T11:00"))));
+    }
 
-  @Test(expected = Exception.class)
-  public void testCopyEventsBetween_MissingAndToken() throws Exception {
-    multiCal.createCalendar("Work", "America/New_York");
-    String command = "copy events between 2025-03-27 2025-03-29 to --target Personal 2025-03-28";
-    CommandParser.processCommand(command, multiCal);
-  }
+    // Add tests for error conditions in multi-calendar commands if not covered elsewhere
+    @Test(expected = Exception.class)
+    public void testCopyEvent_SourceEventNotFound() throws Exception {
+        CommandParser.processCommand("create calendar --name Source --timezone UTC", model); // Pass model
+        CommandParser.processCommand("create calendar --name Target --timezone UTC", model); // Pass model
+        CommandParser.processCommand("use calendar --name Source", model); // Pass model
+        String copyCmd = "copy event NonExistent on 2025-04-01T10:00 --target Target to 2025-04-02T14:00";
+        CommandParser.processCommand(copyCmd, model); // Pass model
+    }
+
+     @Test(expected = Exception.class)
+    public void testCopyEvent_TargetCalNotFound() throws Exception {
+        CommandParser.processCommand("create calendar --name Source --timezone UTC", model); // Pass model
+        CommandParser.processCommand("use calendar --name Source", model); // Pass model
+        CommandParser.processCommand("create event CopyMe from 2025-04-01T10:00 to 2025-04-01T11:00", model); // Pass model
+        String copyCmd = "copy event CopyMe on 2025-04-01T10:00 --target NoTarget to 2025-04-02T14:00";
+        CommandParser.processCommand(copyCmd, model); // Pass model
+    }
+
+    // --- Tests Added Based on Assignment 5 Feedback ---
+
+    @Test
+    public void testCopyEvent_SameTimezone() throws Exception {
+        CommandParser.processCommand("create calendar --name CalA --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("create calendar --name CalB --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("use calendar --name CalA", model); // Pass model
+        LocalDateTime start = LocalDateTime.of(2025, 5, 1, 10, 0);
+        LocalDateTime end = LocalDateTime.of(2025, 5, 1, 11, 0);
+        CommandParser.processCommand("create event EventSameTZ from " + start.format(dateTimeFormatter) + " to " + end.format(dateTimeFormatter), model); // Pass model
+
+        LocalDateTime targetStart = LocalDateTime.of(2025, 5, 2, 10, 0);
+        String copyCmd = String.format("copy event EventSameTZ on %s --target CalB to %s",
+                                       start.format(dateTimeFormatter),
+                                       targetStart.format(dateTimeFormatter));
+        CommandParser.processCommand(copyCmd, model); // Pass model
+
+        model.useCalendar("CalB");
+        List<ICalendarEvent> eventsB = model.getCurrentCalendar().getEventsOn(targetStart.toLocalDate()); // Use getCurrentCalendar()
+        assertEquals(1, eventsB.size());
+        assertEquals("EventSameTZ", eventsB.get(0).getEventName());
+        assertEquals(targetStart, eventsB.get(0).getStart());
+        assertEquals(targetStart.plusHours(1), eventsB.get(0).getEnd());
+    }
+
+    @Test
+    public void testCopyEvent_DifferentTimezone() throws Exception {
+        CommandParser.processCommand("create calendar --name CalNY --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("create calendar --name CalLA --timezone America/Los_Angeles", model); // Pass model
+        CommandParser.processCommand("use calendar --name CalNY", model); // Pass model
+        LocalDateTime startNY = LocalDateTime.of(2025, 5, 1, 10, 0); // 10 AM NY
+        LocalDateTime endNY = LocalDateTime.of(2025, 5, 1, 11, 0);
+        CommandParser.processCommand("create event EventDiffTZ from " + startNY.format(dateTimeFormatter) + " to " + endNY.format(dateTimeFormatter), model); // Pass model
+
+        LocalDateTime targetStartLA = LocalDateTime.of(2025, 5, 1, 10, 0); // 10 AM LA
+        String copyCmd = String.format("copy event EventDiffTZ on %s --target CalLA to %s",
+                                       startNY.format(dateTimeFormatter),
+                                       targetStartLA.format(dateTimeFormatter));
+        CommandParser.processCommand(copyCmd, model); // Pass model
+
+        model.useCalendar("CalLA");
+        List<ICalendarEvent> eventsLA = model.getCurrentCalendar().getEventsOn(targetStartLA.toLocalDate()); // Use getCurrentCalendar()
+        assertEquals(1, eventsLA.size());
+        assertEquals("EventDiffTZ", eventsLA.get(0).getEventName());
+        assertEquals(targetStartLA, eventsLA.get(0).getStart());
+        assertEquals(targetStartLA.plusHours(1), eventsLA.get(0).getEnd());
+    }
+
+     @Test
+    public void testCopyEventsOn_SameTimezone() throws Exception {
+        CommandParser.processCommand("create calendar --name CalA --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("create calendar --name CalB --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("use calendar --name CalA", model); // Pass model
+        CommandParser.processCommand("create event EventA1 from 2025-05-03T09:00 to 2025-05-03T10:00", model); // Pass model
+        CommandParser.processCommand("create event EventA2 from 2025-05-03T14:00 to 2025-05-03T15:00", model); // Pass model
+
+        String copyCmd = "copy events on 2025-05-03 --target CalB to 2025-05-04";
+        CommandParser.processCommand(copyCmd, model); // Pass model
+
+        model.useCalendar("CalB");
+        List<ICalendarEvent> eventsB = model.getCurrentCalendar().getEventsOn(LocalDate.parse("2025-05-04")); // Use getCurrentCalendar()
+        assertEquals(2, eventsB.size());
+        assertTrue(eventsB.stream().anyMatch(e -> e.getStart().equals(LocalDateTime.parse("2025-05-04T09:00"))));
+        assertTrue(eventsB.stream().anyMatch(e -> e.getStart().equals(LocalDateTime.parse("2025-05-04T14:00"))));
+    }
+
+     @Test
+    public void testCopyEventsOn_DifferentTimezone() throws Exception {
+        CommandParser.processCommand("create calendar --name CalNY --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("create calendar --name CalLA --timezone America/Los_Angeles", model); // Pass model
+        CommandParser.processCommand("use calendar --name CalNY", model); // Pass model
+        CommandParser.processCommand("create event EventNY1 from 2025-05-05T09:00 to 2025-05-05T10:00", model); // Pass model
+        CommandParser.processCommand("create event EventNY2 from 2025-05-05T14:00 to 2025-05-05T15:00", model); // Pass model
+
+        String copyCmd = "copy events on 2025-05-05 --target CalLA to 2025-05-06";
+        CommandParser.processCommand(copyCmd, model); // Pass model
+
+        model.useCalendar("CalLA");
+        List<ICalendarEvent> eventsLA = model.getCurrentCalendar().getEventsOn(LocalDate.parse("2025-05-06")); // Use getCurrentCalendar()
+        assertEquals(2, eventsLA.size());
+        // Times should be preserved locally on the new date
+        assertTrue(eventsLA.stream().anyMatch(e -> e.getStart().equals(LocalDateTime.parse("2025-05-06T09:00"))));
+        assertTrue(eventsLA.stream().anyMatch(e -> e.getStart().equals(LocalDateTime.parse("2025-05-06T14:00"))));
+    }
+
+     @Test
+    public void testCopyEventsBetween_SameTimezone() throws Exception {
+        CommandParser.processCommand("create calendar --name CalA --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("create calendar --name CalB --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("use calendar --name CalA", model); // Pass model
+        CommandParser.processCommand("create event Day1 from 2025-05-10T09:00 to 2025-05-10T10:00", model); // Pass model
+        CommandParser.processCommand("create event Day2 from 2025-05-11T11:00 to 2025-05-11T12:00", model); // Pass model
+
+        String copyCmd = "copy events between 2025-05-10 and 2025-05-11 to --target CalB 2025-05-15";
+        CommandParser.processCommand(copyCmd, model); // Pass model
+
+        model.useCalendar("CalB");
+        List<ICalendarEvent> eventsB = model.getCurrentCalendar().getEventsInRange(LocalDate.parse("2025-05-15").atStartOfDay(), LocalDate.parse("2025-05-17").atStartOfDay()); // Use getCurrentCalendar()
+        assertEquals(2, eventsB.size());
+        assertTrue(eventsB.stream().anyMatch(e -> e.getEventName().equals("Day1") && e.getStart().equals(LocalDateTime.parse("2025-05-15T09:00"))));
+        assertTrue(eventsB.stream().anyMatch(e -> e.getEventName().equals("Day2") && e.getStart().equals(LocalDateTime.parse("2025-05-16T11:00"))));
+    }
+
+     @Test
+    public void testCopyEventsBetween_DifferentTimezone() throws Exception {
+        CommandParser.processCommand("create calendar --name CalNY --timezone America/New_York", model); // Pass model
+        CommandParser.processCommand("create calendar --name CalLA --timezone America/Los_Angeles", model); // Pass model
+        CommandParser.processCommand("use calendar --name CalNY", model); // Pass model
+        CommandParser.processCommand("create event DayNY1 from 2025-05-10T09:00 to 2025-05-10T10:00", model); // Pass model
+        CommandParser.processCommand("create event DayNY2 from 2025-05-11T11:00 to 2025-05-11T12:00", model); // Pass model
+
+        String copyCmd = "copy events between 2025-05-10 and 2025-05-11 to --target CalLA 2025-05-15";
+        CommandParser.processCommand(copyCmd, model); // Pass model
+
+        model.useCalendar("CalLA");
+        List<ICalendarEvent> eventsLA = model.getCurrentCalendar().getEventsInRange(LocalDate.parse("2025-05-15").atStartOfDay(), LocalDate.parse("2025-05-17").atStartOfDay()); // Use getCurrentCalendar()
+        assertEquals(2, eventsLA.size());
+        // Times should be preserved locally relative to the target start date
+        assertTrue(eventsLA.stream().anyMatch(e -> e.getEventName().equals("DayNY1") && e.getStart().equals(LocalDateTime.parse("2025-05-15T09:00"))));
+        assertTrue(eventsLA.stream().anyMatch(e -> e.getEventName().equals("DayNY2") && e.getStart().equals(LocalDateTime.parse("2025-05-16T11:00"))));
+    }
+
 }

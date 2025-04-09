@@ -26,6 +26,7 @@ public class DayEventsDialog extends JDialog {
   private JButton editEventButton;
   private JButton deleteEventButton;
   private JButton closeButton;
+  private ColorManager colorManager; // Added for coloring
 
   /**
    * Constructor
@@ -39,6 +40,7 @@ public class DayEventsDialog extends JDialog {
     this.date = date;
     // this.calendarManager = calendarManager; // Removed model assignment
     this.controller = controller; // Store controller
+    this.colorManager = new ColorManager(); // Initialize ColorManager
 
     // Initialize components
     initializeComponents();
@@ -63,8 +65,10 @@ public class DayEventsDialog extends JDialog {
   private void initializeComponents() {
     eventsModel = new DefaultListModel<>();
     eventsList = new JList<>(eventsModel);
-    eventsList.setCellRenderer(new EventCellRenderer());
-    eventsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    // Pass controller and colorManager to the renderer
+    eventsList.setCellRenderer(new EventCellRenderer(controller, colorManager));
+    // Allow multiple selections for deletion
+    eventsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     addEventButton = new JButton("Add Event");
     editEventButton = new JButton("Edit");
@@ -114,9 +118,14 @@ public class DayEventsDialog extends JDialog {
 
     // Selection listener for the events list
     eventsList.addListSelectionListener(e -> {
-      boolean hasSelection = !eventsList.isSelectionEmpty();
-      editEventButton.setEnabled(hasSelection);
-      deleteEventButton.setEnabled(hasSelection);
+        if (!e.getValueIsAdjusting()) { // Only react when selection is stable
+            int[] selectedIndices = eventsList.getSelectedIndices();
+            boolean singleSelection = selectedIndices.length == 1;
+            boolean anySelection = selectedIndices.length > 0;
+
+            editEventButton.setEnabled(singleSelection); // Enable edit only for single selection
+            deleteEventButton.setEnabled(anySelection); // Enable delete if any are selected
+        }
     });
 
     // Add event button
@@ -134,10 +143,10 @@ public class DayEventsDialog extends JDialog {
 
     // Delete event button
     deleteEventButton.addActionListener(e -> {
-      ICalendarEvent selected = eventsList.getSelectedValue();
-      if (selected != null) {
-        confirmDeleteEvent(selected);
-      }
+        List<ICalendarEvent> selectedEvents = eventsList.getSelectedValuesList();
+        if (!selectedEvents.isEmpty()) {
+            confirmDeleteMultipleEvents(selectedEvents);
+        }
     });
 
     // Double-click on event to edit
@@ -207,8 +216,6 @@ public class DayEventsDialog extends JDialog {
   }
 
   /**
-   * Edit an existing event
-   *
    * Edit an existing event using the EventDialog
    *
    * @param event The event to edit
@@ -224,49 +231,65 @@ public class DayEventsDialog extends JDialog {
   /**
    * Confirm and delete an event
    *
-   * @param event The event to delete
+   * @param eventsToDelete The list of events to delete
    */
-  private void confirmDeleteEvent(ICalendarEvent event) {
+  private void confirmDeleteMultipleEvents(List<ICalendarEvent> eventsToDelete) {
+    String message;
+    if (eventsToDelete.size() == 1) {
+        message = "Are you sure you want to delete event: " + eventsToDelete.get(0).getEventName() + "?";
+    } else {
+        message = "Are you sure you want to delete the selected " + eventsToDelete.size() + " events?";
+    }
+
     int result = JOptionPane.showConfirmDialog(
         this,
-        "Are you sure you want to delete event: " + event.getEventName() + "?",
+        message,
         "Confirm Deletion",
         JOptionPane.YES_NO_OPTION,
         JOptionPane.WARNING_MESSAGE
     );
 
     if (result == JOptionPane.YES_OPTION) {
-      try {
-        // Call the controller's deleteEvent method
-        boolean deleted = controller.deleteEvent(
-            event.getEventName(), event.getStart(), event.getEnd()
-        );
+        int deletedCount = 0;
+        int failedCount = 0;
+        StringBuilder errors = new StringBuilder("Errors occurred while deleting:\n");
 
-        if (deleted) {
-          JOptionPane.showMessageDialog(
-              this,
-              "Event deleted successfully.",
-              "Success",
-              JOptionPane.INFORMATION_MESSAGE
-          );
-          // After deleting, reload events
-          loadEvents();
-        } else {
-           JOptionPane.showMessageDialog(
-              this,
-              "Event could not be found or deleted.",
-              "Deletion Failed",
-              JOptionPane.WARNING_MESSAGE
-          );
+        for (ICalendarEvent event : eventsToDelete) {
+            try {
+                // Call the controller's deleteEvent method for each event
+                boolean deleted = controller.deleteEvent(
+                    event.getEventName(), event.getStart(), event.getEnd()
+                );
+                if (deleted) {
+                    deletedCount++;
+                } else {
+                    // Should ideally not happen if controller throws EventNotFoundException
+                    failedCount++;
+                    errors.append("- Could not delete '").append(event.getEventName()).append("'\n");
+                }
+            } catch (Exception e) { // Catch exceptions from controller.deleteEvent
+                failedCount++;
+                errors.append("- Error deleting '").append(event.getEventName()).append("': ").append(e.getMessage()).append("\n");
+            }
         }
-      } catch (Exception e) {
-        JOptionPane.showMessageDialog(
-            this,
-            "Error deleting event: " + e.getMessage(),
-            "Error",
-            JOptionPane.ERROR_MESSAGE
-        );
-      }
+
+        // Show summary message
+        String summaryMessage = deletedCount + " event(s) deleted.";
+        if (failedCount > 0) {
+            summaryMessage += "\n" + failedCount + " event(s) failed to delete.";
+            JOptionPane.showMessageDialog(
+                this,
+                summaryMessage + "\n\n" + errors.toString(),
+                "Deletion Result",
+                JOptionPane.WARNING_MESSAGE
+            );
+        } else {
+             // Optionally show success message only if needed (list refresh should happen via events)
+             // JOptionPane.showMessageDialog(this, summaryMessage, "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        // Refresh the list regardless of partial success/failure
+        loadEvents();
     }
   }
 
@@ -274,75 +297,85 @@ public class DayEventsDialog extends JDialog {
    * Custom cell renderer for the events list
    */
   private class EventCellRenderer extends DefaultListCellRenderer {
-    @Override
-    public Component getListCellRendererComponent(
-        JList<?> list, Object value, int index,
-        boolean isSelected, boolean cellHasFocus) {
+      private final ICalendarController cellController;
+      private final ColorManager cellColorManager;
 
-      JLabel label = (JLabel) super.getListCellRendererComponent(
-          list, value, index, isSelected, cellHasFocus);
-
-      if (value instanceof ICalendarEvent) {
-        ICalendarEvent event = (ICalendarEvent) value;
-
-        // Format display based on event type
-        if (event.isAllDay()) {
-          // For all-day events spanning multiple days, indicate the range if needed,
-          // but for a single day view, "All Day" is usually sufficient.
-          // If the event starts *before* this dialog's date, we could add "(Continues)"
-          if (event.getStart().toLocalDate().isBefore(date)) {
-             label.setText(event.getEventName() + " (All Day, Continues)");
-          } else {
-             label.setText(event.getEventName() + " (All Day)");
-          }
-        } else {
-          LocalDateTime eventStart = event.getStart();
-          LocalDateTime eventEnd = event.getEnd();
-          LocalDate eventStartDate = eventStart.toLocalDate();
-          LocalDate eventEndDate = eventEnd.toLocalDate();
-          DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-          DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, HH:mm");
-
-          // Check if the event spans multiple days relative to the dialog's date
-          boolean startsBefore = eventStartDate.isBefore(date);
-          boolean endsAfter = eventEndDate.isAfter(date);
-          // Handle case where event ends exactly at midnight of the next day
-          boolean endsOnMidnightNextDay = eventEnd.toLocalTime().equals(LocalTime.MIDNIGHT) && eventEndDate.equals(date.plusDays(1));
-
-
-          if (startsBefore && (endsAfter || endsOnMidnightNextDay)) {
-            // Spans the entire current day
-            label.setText(String.format("%s (Continues from %s until %s)",
-                event.getEventName(),
-                eventStart.format(dateTimeFormatter),
-                eventEnd.format(dateTimeFormatter)));
-          } else if (startsBefore && eventEndDate.equals(date)) {
-            // Starts before today, ends today
-             label.setText(String.format("%s (Ends %s, from %s)",
-                event.getEventName(),
-                eventEnd.format(timeFormatter),
-                eventStart.format(dateTimeFormatter)));
-          } else if (eventStartDate.equals(date) && (endsAfter || endsOnMidnightNextDay)) {
-            // Starts today, ends after today
-             label.setText(String.format("%s (Starts %s, until %s)",
-                event.getEventName(),
-                eventStart.format(timeFormatter),
-                eventEnd.format(dateTimeFormatter)));
-          } else if (eventStartDate.equals(date) && eventEndDate.equals(date)) {
-            // Starts and ends today (the original case)
-            String timeStr = eventStart.format(timeFormatter) + " - " + eventEnd.format(timeFormatter);
-            label.setText(event.getEventName() + " (" + timeStr + ")");
-          } else {
-             // Should not happen if getEventsOn is correct, but fallback
-             label.setText(String.format("%s (%s - %s)",
-                event.getEventName(),
-                eventStart.format(dateTimeFormatter),
-                eventEnd.format(dateTimeFormatter)));
-          }
-        }
+      public EventCellRenderer(ICalendarController controller, ColorManager colorManager) {
+          this.cellController = controller;
+          this.cellColorManager = colorManager;
       }
-      return label;
-    }
+
+      @Override
+      public Component getListCellRendererComponent(
+          JList<?> list, Object value, int index,
+          boolean isSelected, boolean cellHasFocus) {
+
+          // Get default label styling
+          JLabel label = (JLabel) super.getListCellRendererComponent(
+              list, value, index, isSelected, cellHasFocus);
+
+          if (value instanceof ICalendarEvent) {
+              ICalendarEvent event = (ICalendarEvent) value;
+              String displayText;
+
+              // Format display text based on event type
+              if (event.isAllDay()) {
+                  if (event.getStart().toLocalDate().isBefore(date)) {
+                     displayText = event.getEventName() + " (All Day, Continues)";
+                  } else {
+                     displayText = event.getEventName() + " (All Day)";
+                  }
+              } else {
+                  LocalDateTime eventStart = event.getStart();
+                  LocalDateTime eventEnd = event.getEnd();
+                  LocalDate eventStartDate = eventStart.toLocalDate();
+                  LocalDate eventEndDate = eventEnd.toLocalDate();
+                  DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+                  DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, HH:mm");
+
+                  boolean startsBefore = eventStartDate.isBefore(date);
+                  boolean endsAfter = eventEndDate.isAfter(date);
+                  boolean endsOnMidnightNextDay = eventEnd.toLocalTime().equals(LocalTime.MIDNIGHT) && eventEndDate.equals(date.plusDays(1));
+
+                  if (startsBefore && (endsAfter || endsOnMidnightNextDay)) {
+                      displayText = String.format("%s (Continues from %s until %s)",
+                          event.getEventName(), eventStart.format(dateTimeFormatter), eventEnd.format(dateTimeFormatter));
+                  } else if (startsBefore && eventEndDate.equals(date)) {
+                      displayText = String.format("%s (Ends %s, from %s)",
+                          event.getEventName(), eventEnd.format(timeFormatter), eventStart.format(dateTimeFormatter));
+                  } else if (eventStartDate.equals(date) && (endsAfter || endsOnMidnightNextDay)) {
+                      displayText = String.format("%s (Starts %s, until %s)",
+                          event.getEventName(), eventStart.format(timeFormatter), eventEnd.format(dateTimeFormatter));
+                  } else if (eventStartDate.equals(date) && eventEndDate.equals(date)) {
+                      String timeStr = eventStart.format(timeFormatter) + " - " + eventEnd.format(timeFormatter);
+                      displayText = event.getEventName() + " (" + timeStr + ")";
+                  } else {
+                      displayText = String.format("%s (%s - %s)",
+                          event.getEventName(), eventStart.format(dateTimeFormatter), eventEnd.format(dateTimeFormatter));
+                  }
+              }
+              label.setText(displayText);
+
+              // Apply color based on the current calendar
+              try {
+                  String currentCalendarName = cellController.getCurrentCalendarName();
+                  if (currentCalendarName != null) {
+                      // Correct method name: getColorForCalendar
+                      Color calendarColor = cellColorManager.getColorForCalendar(currentCalendarName);
+                      // Use color for foreground or background (foreground is usually better for lists)
+                      if (!isSelected) { // Don't override selection color
+                          label.setForeground(calendarColor);
+                      }
+                      // Example: Set a border color instead/as well
+                      // label.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, calendarColor));
+                  }
+              } catch (Exception e) {
+                  // Ignore errors getting color, use default rendering
+                  System.err.println("Error getting calendar color for renderer: " + e.getMessage());
+              }
+          }
+          return label;
+      }
   }
 
   /**

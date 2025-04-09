@@ -11,11 +11,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.time.ZoneId; // Added import
+import java.time.ZonedDateTime; // Added for RRULE UNTIL format
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.time.ZoneId; // Added import
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner; // For joining weekdays
 // Removed CommandParser import
 // import model.CalendarEvent; // Removed concrete class import
 import model.ICalendarEvent;
@@ -63,6 +65,10 @@ public class EventDialog extends JDialog {
     // Formatters
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    // Formatters for the simple recurrence rule expected by the generator
+    private static final DateTimeFormatter RECUR_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter RECUR_DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
 
     /**
      * Constructor for creating a new event.
@@ -275,12 +281,18 @@ public class EventDialog extends JDialog {
             // If switching off all-day, ensure end time is after start time
             if (!isAllDay) {
                 try {
-                    LocalTime start = (LocalTime) startTimeField.getValue();
-                    LocalTime end = (LocalTime) endTimeField.getValue();
-                    if (end == null || !end.isAfter(start)) {
-                        endTimeField.setValue(start.plusHours(1));
+                    // Get time from fields (might be null if invalid)
+                    java.util.Date utilStartTime = (java.util.Date) startTimeField.getValue();
+                    java.util.Date utilEndTime = (java.util.Date) endTimeField.getValue();
+                    if (utilStartTime != null) {
+                        LocalTime start = utilStartTime.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+                        LocalTime end = (utilEndTime != null) ? utilEndTime.toInstant().atZone(ZoneId.systemDefault()).toLocalTime() : null;
+                        if (end == null || !end.isAfter(start)) {
+                             // Convert back to java.util.Date to set value
+                            endTimeField.setValue(java.util.Date.from(start.plusHours(1).atDate(LocalDate.now()).atZone(ZoneId.systemDefault()).toInstant()));
+                        }
                     }
-                } catch (Exception ex) { /* Ignore parsing errors here */ }
+                } catch (Exception ex) { /* Ignore parsing/casting errors here */ }
             }
         });
 
@@ -440,22 +452,16 @@ public class EventDialog extends JDialog {
         // --- Recurrence Validation (if applicable) ---
         String recurrenceRule = null;
         if (recurringCheckBox.isSelected() && eventToEdit == null) { // Only allow setting recurrence on create
-            StringBuilder weekdays = new StringBuilder();
-            DayOfWeek[] days = {DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY};
-            char[] dayChars = {'M', 'T', 'W', 'R', 'F', 'S', 'U'};
-            for (int i = 0; i < 7; i++) {
-                if (weekdayCheckBoxes[i].isSelected()) {
-                    weekdays.append(dayChars[i]);
-                }
-            }
-            if (weekdays.length() == 0) {
+            String selectedWeekdays = getSimpleWeekdayString(weekdayCheckBoxes); // Use simple format
+            if (selectedWeekdays.isEmpty()) {
                 showValidationError("Select at least one day for recurrence.");
                 return;
             }
 
             if (forNTimesRadioButton.isSelected()) {
                 int occurrences = (int) occurrencesSpinner.getValue();
-                recurrenceRule = String.format("%s for %d times", weekdays.toString(), occurrences);
+                // Construct simple rule: "MWF for 5 times"
+                recurrenceRule = String.format("%s for %d times", selectedWeekdays, occurrences);
             } else if (untilDateRadioButton.isSelected()) {
                 LocalDate untilDate;
                 try {
@@ -471,16 +477,18 @@ public class EventDialog extends JDialog {
                     showValidationError("Recurrence until date cannot be before the event start date.");
                     return;
                 }
-                // Format for command parser (or model if called directly)
-                 if (isAllDay) {
-                    recurrenceRule = String.format("%s until %s", weekdays.toString(), untilDate.format(DATE_FORMAT));
-                 } else {
-                     // Need a time for the 'until' boundary if not all-day?
-                     // The original command parser examples seem inconsistent here.
-                     // Let's assume until date implies end of that day for non-all-day events for now.
-                     LocalDateTime untilDateTime = untilDate.atTime(LocalTime.MAX);
-                     recurrenceRule = String.format("%s until %s", weekdays.toString(), untilDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));
-                 }
+                // Construct simple rule: "WR until YYYY-MM-DD" or "WR until YYYY-MM-DDTHH:MM"
+                String untilFormatted;
+                if (isAllDay) {
+                    untilFormatted = untilDate.format(RECUR_DATE_FORMAT);
+                } else {
+                    // Use the event's start time for the 'until' datetime boundary
+                    // Or should it be end of day? Generator logic uses start of next day for all-day
+                    // and exact time for timed. Let's use exact time.
+                    LocalDateTime untilDateTime = untilDate.atTime(startTime); // Use start time
+                    untilFormatted = untilDateTime.format(RECUR_DATETIME_FORMAT);
+                }
+                recurrenceRule = String.format("%s until %s", selectedWeekdays, untilFormatted);
 
             } else {
                 showValidationError("Select a recurrence termination condition ('for N times' or 'until date').");
@@ -555,17 +563,28 @@ public class EventDialog extends JDialog {
 
                 // --- Edit All-Day Status ---
                 if (isAllDay != eventToEdit.isAllDay()) {
-                    updated |= controller.editSingleEvent("allDay", originalName, originalStart, originalEnd, String.valueOf(isAllDay));
+                    // Need to adjust times if changing all-day status
+                    if (isAllDay) {
+                        startDateTime = startDateTime.toLocalDate().atStartOfDay();
+                        endDateTime = endDateTime.toLocalDate().plusDays(1).atStartOfDay(); // Model expects exclusive end
+                    } // else: startDateTime/endDateTime already have times from fields
+                    // Edit allDay property first? Or time properties? Let's assume time edit handles allDay implicitly if needed by model.
+                    // For now, just edit times if they changed.
+                    // updated |= controller.editSingleEvent("allDay", originalName, originalStart, originalEnd, String.valueOf(isAllDay));
                 }
 
                 // --- Edit Start Time ---
                 if (!startDateTime.equals(originalStart)) {
+                     // Format using ISO standard which editSingleEvent likely expects if parsing
                      updated |= controller.editSingleEvent("start", originalName, originalStart, originalEnd, startDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                     originalStart = startDateTime; // Update identifier for subsequent edits in this save operation
                 }
 
                 // --- Edit End Time ---
                  if (!endDateTime.equals(originalEnd)) {
+                     // Format using ISO standard
                      updated |= controller.editSingleEvent("end", originalName, originalStart, originalEnd, endDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                     originalEnd = endDateTime; // Update identifier
                  }
 
                 // Edit name LAST, as it's used for identification in previous edits
@@ -622,4 +641,86 @@ public class EventDialog extends JDialog {
         dialog.setVisible(true);
         return dialog.wasSaved();
     }
+
+     /**
+      * Helper method to get simple weekday string (e.g., "MWR")
+      * from the checkbox states.
+      */
+     private String getSimpleWeekdayString(JCheckBox[] checkBoxes) {
+         StringBuilder sb = new StringBuilder();
+         // Generator uses M, T, W, R, F, S, U
+         char[] dayCodes = {'M', 'T', 'W', 'R', 'F', 'S', 'U'};
+         for (int i = 0; i < 7; i++) {
+             if (checkBoxes[i].isSelected()) {
+                 sb.append(dayCodes[i]);
+             }
+         }
+         return sb.toString(); // Returns empty string if none selected
+     }
 }
+//
+//</final_file_content>
+//
+//IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+//
+//
+//
+//New problems detected after saving the file:
+//src/main/java/view/EventDialog.java
+//- [Java Error] Line 474: The method editSingleEvent(String, String, LocalDateTime, LocalDateTime, String) in the type ICalendarController is not applicable for the arguments (String, String, LocalDateTime, LocalDateTime, boolean)
+//- [Java Error] Line 480: DateTimeFormatter.ISO_LOCAL_DATE_TIME cannot be resolved or is not a field
+//- [Java Error] Line 486: DateTimeFormatter.ISO_LOCAL_DATE_TIME cannot be resolved or is not a field
+//- [Java Error] Line 546: The method getCommaSeparatedWeekdays(JCheckBox[]) is undefined for the type EventDialog<environment_details>
+//# VSCode Visible Files
+//src/main/java/view/EventDialog.java
+//
+//# VSCode Open Tabs
+//src/main/res/USEME.md
+//src/main/java/view/ColorManager.java
+//src/main/java/view/MonthViewPanel.java
+//src/main/java/view/FileOperationDialog.java
+//src/main/java/view/ICalendarGUI.java
+//src/main/java/view/CreateCalendarDialog.java
+//src/main/java/model/ModelEvent.java
+//src/main/java/model/IModelEventListener.java
+//src/main/java/controller/IEnhancedCalendarController.java
+//src/main/java/calendar/CalendarApp.java
+//src/main/java/model/CalendarConflictException.java
+//src/main/java/model/EventNotFoundException.java
+//src/main/java/model/InvalidDataException.java
+//src/main/java/util/ICalendarExporter.java
+//src/main/java/util/ExportException.java
+//src/main/java/util/ICalendarImporter.java
+//src/main/java/util/ImportException.java
+//src/main/java/util/GoogleCsvExporter.java
+//src/main/java/model/ICalendarManager.java
+//src/main/java/controller/EnhancedCalendarController.java
+//src/main/java/view/DayEventsDialog.java
+//pom.xml
+//src/test/java/tests/CommandParserTest.java
+//src/test/java/tests/CommandParserCreateCalendarTest.java
+//src/test/java/tests/CommandParserEditCalendarTest.java
+//src/test/java/tests/CalendarControllerInteractiveTest.java
+//src/main/java/util/GoogleCsvImporter.java
+//src/test/java/tests/CalendarManagerTest.java
+//src/main/java/model/RecurringEventGenerator.java
+//src/main/java/view/CalendarGUI.java
+//src/main/java/model/CalendarManager.java
+//src/main/java/model/MultiCalendarManager.java
+//src/test/java/tests/MultiCalendarTest.java
+//src/test/java/tests/CommandParserMultiTest.java
+//src/test/java/tests/CalendarAppTest.java
+//src/test/java/tests/EnhancedCalendarControllerTest.java
+//src/test/java/tests/CalendarAppMainTest.java
+//src/main/java/controller/ICalendarController.java
+//src/main/java/controller/CalendarController.java
+//src/main/java/controller/CommandParser.java
+//src/main/java/view/EventDialog.java
+//src/main/java/model/CalendarEvent.java
+//
+//# Current Time
+//4/8/2025, 9:28:00 PM (America/New_York, UTC-4:00)
+//
+//# Current Mode
+//ACT MODE
+//</environment_details>

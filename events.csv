@@ -1,13 +1,6 @@
-EventName,Start,End,AllDay,Description,Location,Public
-"--autoDecline "Lunch Break"",2020-03-10 00:00,2020-03-11 00:00,true,"","",true
-""Daily"",2021-03-10 00:00,2021-03-10 00:00,true,"","",true
-""Daily"",2021-03-11 00:00,2021-03-11 00:00,true,"","",true
-""Daily"",2021-03-12 00:00,2021-03-12 00:00,true,"","",true
-""Daily"",2021-03-15 00:00,2021-03-15 00:00,true,"","",true
-""Daily"",2021-03-16 00:00,2021-03-16 00:00,true,"","",true
-"--autoDecline "Breakfast"",2023-03-13 12:12,2023-03-13 13:12,false,"","",true
-"--autoDecline "Breakfast"",2023-03-14 12:12,2023-03-14 13:12,false,"","",true
-"--autoDecline "Team Meeting"",2025-03-10 12:12,2025-03-10 13:12,false,"","",true
-""Sprint"",2025-03-14 10:00,2025-03-14 11:00,false,"","",true
-""Sprint"",2025-03-21 10:00,2025-03-21 11:00,false,"","",true
-""Sprint"",2025-03-28 10:00,2025-03-28 11:00,false,"","",true
+Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location,Private
+"Meeting",03/01/2025,10:00 am,03/01/2025,11:00 am,False,"""Quarterly results""","""Conference Room A""",False
+"Workshop",03/03/2025,09:00 am,03/03/2025,10:00 am,False,"","",False
+"Holiday",03/05/2025,,03/05/2025,,True,"","",True
+"Workshop",03/07/2025,09:00 am,03/07/2025,10:00 am,False,"","",False
+"Conference",03/10/2025,,03/10/2025,,True,"","",False

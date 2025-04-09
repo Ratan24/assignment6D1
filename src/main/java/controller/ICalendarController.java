@@ -1,5 +1,6 @@
 package controller;
 
+import java.io.IOException; // Added import
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -157,15 +158,20 @@ public interface ICalendarController {
     /**
      * Imports events from a Google Calendar CSV file into the current calendar.
      * @param filePath The path to the CSV file.
-     * @return The number of events successfully imported.
-     * @throws Exception If importing fails.
-     */
-    int importFromGoogleCSV(String filePath) throws Exception;
+   * @return The number of events successfully imported.
+   * @throws IOException If an I/O error occurs reading the file.
+   * @throws util.ImportException If the file format is invalid or parsing fails.
+   * @throws model.CalendarConflictException If an imported event conflicts with an existing one.
+   * @throws IllegalStateException If no calendar is currently active to import into.
+   */
+  int importFromGoogleCSV(String filePath) throws IOException, util.ImportException, model.CalendarConflictException;
 
     /**
-     * Exports the current calendar's events to a Google Calendar compatible CSV file.
-     * @param filePath The path where the CSV file should be saved.
-     * @throws Exception If exporting fails.
-     */
-    void exportToGoogleCSV(String filePath) throws Exception;
+   * Exports the current calendar's events to a Google Calendar compatible CSV file.
+   * @param filePath The path where the CSV file should be saved.
+   * @throws IOException If an I/O error occurs writing the file.
+   * @throws util.ExportException If an error occurs during formatting.
+   * @throws IllegalStateException If no calendar is currently active to export from.
+   */
+  void exportToGoogleCSV(String filePath) throws IOException, util.ExportException;
 }

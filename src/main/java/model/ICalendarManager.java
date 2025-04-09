@@ -13,10 +13,11 @@ public interface ICalendarManager {
    * Adds a new event to the calendar.
    *
    * @param newEvent    The event to add
-   * @param autoDecline Whether to automatically decline conflicting events
-   * @throws Exception If there is a conflict with an existing event
+   * @param autoDecline Whether to automatically decline conflicting events (currently ignored, throws exception on conflict)
+   * @throws CalendarConflictException If there is a conflict with an existing event
+   * @throws NullPointerException If newEvent is null
    */
-  void addEvent(ICalendarEvent newEvent, boolean autoDecline) throws Exception;
+  void addEvent(ICalendarEvent newEvent, boolean autoDecline) throws CalendarConflictException;
 
   /**
    * Gets all events scheduled on the specified date.
@@ -35,19 +36,8 @@ public interface ICalendarManager {
    */
   List<ICalendarEvent> getEventsInRange(LocalDateTime startRange, LocalDateTime endRange);
 
-  /**
-   * Exports all events to a CSV file.
-   *
-   * @param fileName The name of the file to export to
-   */
-  void exportToCSV(String fileName);
-
-  /**
-   * Exports all events to a Google Calendar compatible CSV file.
-   *
-   * @param fileName The name of the file to export to
-   */
-  void exportToGoogleCSV(String fileName);
+  // Removed exportToCSV(String fileName);
+  // Removed exportToGoogleCSV(String fileName);
 
   /**
    * Checks if there is any event scheduled at the specified time.
@@ -65,10 +55,14 @@ public interface ICalendarManager {
    * @param start     The start time of the event
    * @param end       The end time of the event
    * @param newValue  The new value for the property
-   * @return true if the event was found and updated, false otherwise
+   * @return true if the event was found and updated
+   * @throws EventNotFoundException if the specified event doesn't exist.
+   * @throws InvalidDataException if the property name or new value is invalid.
+   * @throws CalendarConflictException if updating start/end time causes a conflict.
    */
   boolean editSingleEvent(String property, String eventName,
-      LocalDateTime start, LocalDateTime end, String newValue);
+      LocalDateTime start, LocalDateTime end, String newValue)
+      throws EventNotFoundException, InvalidDataException, CalendarConflictException;
 
   /**
    * Edits all events with the specified name that start at or after the specified time.
@@ -78,8 +72,11 @@ public interface ICalendarManager {
    * @param start     The start time to filter events
    * @param newValue  The new value for the property
    * @return The number of events that were updated
+   * @throws InvalidDataException if the property name or new value is invalid.
+   * @throws CalendarConflictException if updating start/end time causes a conflict.
    */
-  int editEventsByStart(String property, String eventName, LocalDateTime start, String newValue);
+  int editEventsByStart(String property, String eventName, LocalDateTime start, String newValue)
+      throws InvalidDataException, CalendarConflictException;
 
   /**
    * Edits all events with the specified name.
@@ -88,8 +85,11 @@ public interface ICalendarManager {
    * @param eventName The name of the events to edit
    * @param newValue  The new value for the property
    * @return The number of events that were updated
+   * @throws InvalidDataException if the property name or new value is invalid.
+   * @throws CalendarConflictException if updating start/end time causes a conflict.
    */
-  int editEventsByName(String property, String label, String updatedVal);
+  int editEventsByName(String property, String label, String updatedVal)
+      throws InvalidDataException, CalendarConflictException;
 
   /**
    * Deletes a single event identified by its properties.
@@ -97,10 +97,10 @@ public interface ICalendarManager {
    * @param eventName The name/subject of the event to delete.
    * @param start     The exact start time of the event to delete.
    * @param end       The exact end time of the event to delete.
-   * @return true if the event was found and deleted, false otherwise.
-   * @throws Exception if an error occurs during deletion.
+   * @return true if the event was found and deleted.
+   * @throws EventNotFoundException if the specified event doesn't exist.
    */
-  boolean deleteEvent(String eventName, LocalDateTime start, LocalDateTime end) throws Exception;
+  boolean deleteEvent(String eventName, LocalDateTime start, LocalDateTime end) throws EventNotFoundException;
 
   /**
    * Imports events from a Google Calendar compatible CSV file into this calendar.
@@ -109,14 +109,27 @@ public interface ICalendarManager {
    * @param filePath The absolute path to the CSV file.
    * @return The number of events successfully imported.
    * @throws Exception If there's an error reading the file or parsing its content.
-   */
-  int importFromGoogleCSV(String filePath) throws Exception;
+    */
+   // Removed importFromGoogleCSV(String filePath);
 
-  /**
-   * Gets all events in this calendar.
+   /**
+    * Gets all events in this calendar.
    *
    * @return A copy of the list of all events for safety
    */
   List<ICalendarEvent> getAllEvents();
 
+  /**
+   * Adds a listener that will be notified of events occurring in this calendar manager.
+   *
+   * @param listener The listener to add.
+   */
+  void addModelEventListener(IModelEventListener listener);
+
+  /**
+   * Removes a previously added listener.
+   *
+   * @param listener The listener to remove.
+   */
+  void removeModelEventListener(IModelEventListener listener);
 }

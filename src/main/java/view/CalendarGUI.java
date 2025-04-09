@@ -10,10 +10,9 @@ import java.util.List;
 import java.util.Map; // Added for potential future use if controller returns Map
 
 // Removed model imports, will use controller
-// import model.MultiCalendarManager;
-// import model.CalendarManager;
-// import model.ICalendarEvent;
-import controller.ICalendarController; // Use interface
+// Removed model imports
+import controller.IEnhancedCalendarController; // Use enhanced interface
+import controller.EnhancedCalendarController; // Need concrete class for setGUI
 
 /**
  * Main GUI implementation for the Calendar application.
@@ -36,7 +35,7 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
 
   // Model and controller references
   // private MultiCalendarManager calendarManager; // Removed model reference
-  private ICalendarController controller; // Use interface
+  private IEnhancedCalendarController controller; // Use enhanced interface
   private ColorManager colorManager;
 
   // State
@@ -45,14 +44,21 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
   /**
    * Constructor for the GUI
    *
-   * @param controller The controller for handling user actions and data access
+   * @param controller The enhanced controller for handling user actions and data access
    */
-  public CalendarGUI(ICalendarController controller) { // Accept interface
+  public CalendarGUI(IEnhancedCalendarController controller) { // Accept enhanced interface
     super("Calendar Application");
     // this.calendarManager = calendarManager; // Remove model reference
     this.controller = controller;
     this.currentYearMonth = YearMonth.now();
     this.colorManager = new ColorManager();
+
+    // Set the GUI reference on the controller so it can call updateView/showError
+    // This creates a slight coupling, but is common in Swing MVC.
+    // Alternative: GUI listens to controller events (more complex).
+    if (this.controller instanceof EnhancedCalendarController) {
+        ((EnhancedCalendarController) this.controller).setGUI(this);
+    }
 
     initializeFrame();
     initializeComponents();
@@ -201,16 +207,20 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
     });
 
     // Calendar selection
-    calendarSelector.addActionListener(e -> {
-      String selected = (String) calendarSelector.getSelectedItem();
-      // Avoid triggering on initial population or removal
-      if (selected != null && e.getActionCommand().equals("comboBoxChanged")) {
-          try {
-              controller.switchCalendar(selected);
-              updateView(); // Update view after switching
-              setStatus("Using calendar: " + selected);
-          } catch (Exception ex) {
-              showError("Error switching calendar: " + ex.getMessage());
+     calendarSelector.addActionListener(e -> {
+       String selected = (String) calendarSelector.getSelectedItem();
+       // Avoid triggering on initial population or if selection hasn't actually changed
+       if (selected != null && e.getActionCommand().equals("comboBoxChanged")) {
+           try {
+               String actuallyCurrent = controller.getCurrentCalendarName();
+               // Only switch if the selected item is different from the current one
+               if (!selected.equals(actuallyCurrent)) {
+                   controller.switchCalendar(selected);
+                   // updateView(); // No need to call updateView here, the event listener will handle it
+                   setStatus("Using calendar: " + selected);
+               }
+           } catch (Exception ex) {
+               showError("Error switching calendar: " + ex.getMessage());
               // Optionally, re-select the previously active calendar if switch fails
               updateCalendarSelector();
           }
@@ -484,13 +494,13 @@ public class CalendarGUI extends JFrame implements ICalendarGUI {
   }
 
   /**
-   * Static method to launch the GUI
+   * Static method to launch the GUI using the enhanced controller.
    *
-   * @param controller The controller for the application
+   * @param controller The enhanced controller for the application.
    */
-  public static void launchGUI(ICalendarController controller) { // Accept interface
+  public static void launchGUI(IEnhancedCalendarController controller) { // Accept enhanced interface
     SwingUtilities.invokeLater(() -> {
-      // Pass only the controller to the GUI constructor
+      // Pass the enhanced controller to the GUI constructor
       CalendarGUI gui = new CalendarGUI(controller);
       gui.display();
     });
